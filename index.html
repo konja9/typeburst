@@ -56,17 +56,35 @@ body.fx0 .play.hardcore{animation:none}
 .group[data-key="mode"] button{display:inline-flex; align-items:center; gap:1px}
 .group[data-key="mode"] button.on{color:var(--err)}
 .group[data-key="mode"] small{font-size:.8em; margin-left:.25rem}
+.meter{align-items:center}
+.meter button{display:inline-flex; align-items:flex-end; height:24px; padding:.2rem .16rem}
+.meter .bar{display:block; width:7px; border-radius:2px; background:var(--dim); opacity:.4; transition:background .15s, opacity .15s}
+.meter button:nth-of-type(1) .bar{height:7px} .meter button:nth-of-type(2) .bar{height:12px} .meter button:nth-of-type(3) .bar{height:17px}
+.meter button.lit .bar{background:var(--accent); opacity:1; box-shadow:0 0 6px color-mix(in srgb, var(--accent) 60%, transparent)}
+.meter:hover button:not(.lit) .bar{background:var(--text); opacity:.6}
+.meter button:hover ~ button:not(.lit) .bar{background:var(--dim); opacity:.4}
+.meter button:hover ~ button.lit .bar{opacity:.35; box-shadow:none}
 #soundBtn .x{display:none}
 #soundBtn.muted .x{display:inline}
 #soundBtn:not(.muted){color:var(--accent)}
 .sw{display:inline-block; width:.85em; height:.85em; border-radius:50%; vertical-align:-.1em; border:2px solid var(--bg2); box-shadow:0 0 0 1px var(--dim)}
 #themeBtn{display:inline-flex; align-items:center; gap:.4rem}
+#ruleCard{position:absolute; top:calc(100% + .5rem); left:50%; transform:translateX(-50%); z-index:11; width:min(420px,92vw);
+  background:var(--bg2); border:2px solid var(--err); border-radius:12px; padding:1rem 1.1rem; box-shadow:0 12px 32px rgba(0,0,0,.35); color:var(--text)}
+#ruleCard b{color:var(--err); font-size:16px}
+#ruleCard p{margin:.5rem 0 .8rem; font-size:14px; line-height:1.6}
+#ruleOk{background:var(--err); color:var(--bg); font-weight:800; padding:.35rem 1.2rem}
+#ruleHint.danger{color:var(--err)}
 #themePanel{position:absolute; top:calc(100% + .5rem); right:0; z-index:10; display:grid; grid-template-columns:repeat(5,1fr); gap:.5rem;
   background:var(--bg2); padding:.7rem; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,.35); width:min(560px,92vw)}
 #themePanel button{display:flex; flex-direction:column; gap:.35rem; align-items:stretch; padding:.35rem; font-size:12px; border:2px solid transparent}
 #themePanel button.on{border-color:var(--accent); color:var(--text)}
-.pv{display:flex; align-items:flex-end; gap:3px; height:34px; padding:6px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
-.pv i{flex:1; border-radius:2px}
+.pv{display:flex; align-items:center; gap:8px; height:40px; padding:6px 8px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
+.pv svg{flex:none; display:block}
+.pv .bars{flex:1; display:flex; align-items:flex-end; gap:2px; height:100%}
+.pv .bars i{flex:1; border-radius:2px}
+.tsw{display:inline-grid; place-items:center; width:20px; height:20px; border-radius:5px; background:var(--bg); box-shadow:0 0 0 1px var(--dim)}
+.tsw svg{display:block}
 
 #game{display:flex; flex-direction:column; gap:.9rem}
 .hud{display:flex; align-items:baseline; flex-wrap:wrap; column-gap:1.4rem; row-gap:.2rem; font-size:clamp(20px,2.6vw,30px); min-height:1.5em}
@@ -175,25 +193,62 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 
 #recBtn{color:var(--text)}
 #recBtn:hover{color:var(--accent)}
-#records{display:flex; flex-direction:column; gap:1.2rem}
-#recTabs{margin-top:-.7rem}
+#records,#help{display:flex; flex-direction:column; gap:1.2rem}
+#helpBtn{width:1.6em; height:1.6em; padding:0; border:1.5px solid currentColor; border-radius:50%; font-weight:800; line-height:1; display:inline-grid; place-items:center}
+.help-body{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.4rem 2.4rem; font-size:14px; line-height:1.6}
+.help-body section{min-width:0}
+.help-body h3{margin:0 0 .5rem; font-size:15px; color:var(--accent)}
+.help-body p{margin:.3rem 0; color:var(--dim)}
+.help-body p b{color:var(--text); font-weight:600}
+.hrow{display:grid; grid-template-columns:auto auto 1fr; gap:.2rem .8rem; align-items:baseline; padding:.28rem 0; border-bottom:1px solid var(--bg2)}
+.hrow .n{color:var(--text); font-weight:600; white-space:nowrap}
+.hrow .x{color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap}
+.hrow .d{color:var(--dim)}
+.hrow.danger .n,.hrow.danger .x{color:var(--err)}
+.hrow i.sw{margin-right:.4rem}
 .rec-head{display:flex; justify-content:space-between; align-items:center; gap:1rem}
 .rec-head h2{margin:0; font-size:22px; font-weight:800}
-.tabs{display:flex; flex-wrap:wrap; gap:.3rem; background:var(--bg2); padding:.35rem; border-radius:10px; align-self:flex-start; font-size:14px}
-.rec-body{display:grid; grid-template-columns:1fr 1fr; gap:1rem 2.4rem; max-height:min(60vh,560px); overflow:auto; overscroll-behavior:contain}
-.rec-body h3{margin:0 0 .5rem; font-size:14px; color:var(--dim); font-weight:400}
-.rec-body table{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
-.rec-body td,.rec-body th{padding:.32rem .4rem; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bg2)}
-.rec-body th{color:var(--dim); font-weight:400}
-.rec-body td:first-child,.rec-body th:first-child{text-align:left}
-.rec-body td.sc{font-weight:800}
-.rec-body tr.now td{color:var(--accent)}
-.rec-body .tw{overflow-x:auto}
-.rec-body .empty{color:var(--dim); font-size:14px; margin:0}
+.rec-filters{display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; font-size:14px}
+.seg{display:flex; align-items:center; gap:.15rem; background:var(--bg2); padding:.25rem .35rem; border-radius:9px}
+.seg > span{color:var(--dim); font-size:12px; margin:0 .35rem 0 .25rem}
+.seg button.on{background:var(--bg); color:var(--accent)}
+.best-card{position:relative; background:var(--bg2); border-radius:14px; padding:1.1rem 1.3rem; border:1px solid color-mix(in srgb, var(--accent) 35%, transparent)}
+.bc-label{color:var(--dim); font-size:13px}
+.bc-share{position:absolute; top:.8rem; right:.9rem; display:flex; gap:.35rem; font-size:13px}
+.bc-share button{background:var(--bg); padding:.3rem .7rem}
+.bc-label b{color:var(--crit); font-weight:800; margin-right:.5rem}
+.bc-score{font-size:clamp(40px,7vw,64px); font-weight:800; color:var(--accent); line-height:1.1; letter-spacing:-.03em; font-variant-numeric:tabular-nums; margin:.2rem 0 .5rem}
+.bc-score small{font-size:.3em; color:var(--dim); font-weight:400; margin-left:.4em; letter-spacing:0}
+.bc-new{display:inline-block; font-size:12px; font-weight:800; color:var(--bg); background:var(--accent); border-radius:4px; padding:.05rem .4rem; margin-left:.5rem; vertical-align:middle}
+.bc-stats{display:flex; flex-wrap:wrap; gap:.3rem 1.3rem; font-size:13px; color:var(--dim)}
+.bc-stats b{color:var(--text); font-size:16px; font-weight:600; margin-right:.25rem}
+.bc-empty{color:var(--dim); font-size:15px; padding:.6rem 0}
+.bc-empty small{display:block; font-size:13px; margin-top:.3rem}
+.rec-tabs{display:flex; gap:1.2rem; border-bottom:1px solid var(--bg2)}
+.rec-tabs button{padding:.4rem 0; border-radius:0; border-bottom:2px solid transparent; margin-bottom:-1px}
+.rec-tabs button.on{color:var(--text); border-bottom-color:var(--accent)}
+.rec-list{display:flex; flex-direction:column; font-size:14px; font-variant-numeric:tabular-nums}
+.rrow{display:grid; grid-template-columns:2em 6.2em minmax(40px,1fr) 4.4em 3.6em; gap:.7rem; align-items:center; padding:.45rem .2rem; border-bottom:1px solid var(--bg2)}
+.hrow2{display:grid; grid-template-columns:7.2em auto 1fr 4.4em; gap:.7rem; align-items:center; padding:.45rem .2rem; border-bottom:1px solid var(--bg2)}
+.rrow .rk{font-weight:800; color:var(--dim); text-align:center}
+.rk.r2{color:#c3cad6} .rk.r3{color:#d49a6a}
+.rrow .sc,.hrow2 .sc{font-weight:800; text-align:right}
+.rrow .bar{height:6px; background:var(--bg2); border-radius:3px; overflow:hidden}
+.rrow .bar i{display:block; height:100%; background:var(--accent); opacity:.75; border-radius:3px}
+.rrow .wpm,.hrow2 .wpm{text-align:right}
+.rrow small,.hrow2 small{color:var(--dim); font-size:.75em; margin-left:.15em}
+.rrow .dt,.hrow2 .dt{color:var(--dim); font-size:13px}
+.rrow .dt{text-align:right}
+.hrow2 .chip{font-size:12px; color:var(--text); background:var(--bg2); border-radius:6px; padding:.1rem .45rem; white-space:nowrap}
+.rrow.now,.hrow2.now{background:color-mix(in srgb, var(--accent) 10%, transparent)}
+.rrow.now .sc,.hrow2.now .sc{color:var(--accent)}
+.rec-list .empty{color:var(--dim); margin:.8rem 0}
 @media (max-width:700px){
-  .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
-  .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
-  .rec-body .acc{display:none}
+  .help-body{grid-template-columns:1fr}
+  .rrow{grid-template-columns:1.6em 5.4em minmax(30px,1fr) 3.8em 3.2em; gap:.45rem; font-size:13px}
+  .hrow2{grid-template-columns:auto auto 1fr 3.8em; gap:.45rem; font-size:13px}
+  .best-card{padding:.9rem 1rem}
+  .bc-share{position:static; margin-bottom:.6rem}
   body{place-items:start center}
   #cam{padding-top:1rem; padding-bottom:1.5rem}
   #stage{gap:1.4rem}
@@ -227,11 +282,13 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
         </div>
       </div>
       <button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
-      <div class="group" data-key="fx"><button data-v="0" class="ic" title="演出：弱" aria-label="演出：弱"></button><button data-v="1" class="ic" title="演出：中" aria-label="演出：中"></button><button data-v="2" class="ic" title="演出：強" aria-label="演出：強"></button></div>
-      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <i class="sw" id="themeSw"></i></button>
+      <div class="group meter" data-key="fx"><span>演出</span><button data-v="0" title="演出：弱" aria-label="演出：弱"><i class="bar"></i></button><button data-v="1" title="演出：中" aria-label="演出：中"><i class="bar"></i></button><button data-v="2" title="演出：強" aria-label="演出：強"><i class="bar"></i></button></div>
+      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <span id="themeSw" class="tsw"></span></button>
       <button id="recBtn">記録</button>
+      <button id="helpBtn" title="遊び方" aria-label="遊び方">?</button>
     </nav>
     <div id="themePanel" role="dialog" aria-label="テーマ" hidden></div>
+    <div id="ruleCard" role="dialog" aria-live="polite" hidden><b></b><p></p><button id="ruleOk">OK</button></div>
   </header>
 
   <section id="game">
@@ -250,7 +307,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div id="words"></div><div id="caret" class="idle"></div>
       <div id="tapcover" hidden>タップしてキーボードを出す</div>
     </div>
-    <p class="hint" id="hint"><span>文字を打つとスタート</span><span>ゲージ満タンでフィーバー</span><span><kbd>Tab</kbd> でやり直し</span><button id="restartBtn">やり直す</button></p>
+    <p class="hint" id="hint"><span>文字を打つとスタート</span><span id="ruleHint"></span><span>ゲージ満タンでフィーバー</span><span><kbd>Tab</kbd> でやり直し</span><button id="restartBtn">やり直す</button></p>
   </section>
 
   <section id="result" hidden>
@@ -276,14 +333,17 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
     <div class="share"><span>シェア</span><button id="shCopy">コピー</button><button id="shX">Xに投稿</button><button id="shNative" hidden>共有</button></div>
   </section>
 
+  <section id="help" hidden>
+    <div class="rec-head"><h2>遊び方</h2><button id="helpClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="help-body" id="helpBody"></div>
+  </section>
+
   <section id="records" hidden>
     <div class="rec-head"><h2>記録</h2><button id="recClose">閉じる <kbd>Esc</kbd></button></div>
-    <div class="tabs" id="recTextTabs" role="tablist"></div>
-    <div class="tabs" id="recTabs" role="tablist"></div>
-    <div class="rec-body">
-      <div><h3>ランキング（上位10件）</h3><div id="recRank" class="tw"></div></div>
-      <div><h3>最近のプレイ（20件）</h3><div id="recHist" class="tw"></div></div>
-    </div>
+    <div class="rec-filters" id="recFilters"></div>
+    <div class="best-card" id="bestCard"></div>
+    <div class="rec-tabs" role="tablist"><button role="tab" data-tab="rank">ランキング</button><button role="tab" data-tab="hist">最近のプレイ</button></div>
+    <div class="rec-list" id="recList"></div>
   </section>
 </main></div>
 <canvas id="fx"></canvas>
@@ -597,11 +657,33 @@ const THEMES={
   cyber: {name:'サイバー', bg:'#0b0716', bg2:'#170f2a', dim:'#5a4a80', text:'#e8e0ff', err:'#ff3860', hi:'#ffffff',
           tiers:['#00f0ff','#b44cff','#ff2bd6','#fcee0a','#39ff14']}
 };
+/* テーマごとのアイコン（24×24）。属性値の "C0"〜"C4" はテーマの tiers、"BG" は背景色に置き換える */
+const THEME_ICON={
+  night:'<path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="C0"/><circle cx="19" cy="5.5" r="1.4" fill="C1"/>',
+  mono:'<circle cx="12" cy="12" r="8" fill="none" stroke="C0" stroke-width="2.2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="C4"/>',
+  paper:'<path d="M6 3h8l4 4v14H6z" fill="none" stroke="C0" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="C1" stroke-width="2" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke="C2" stroke-width="2" stroke-linecap="round"/>',
+  cream:'<path d="M4.5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" fill="C0"/><path d="M15.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.5" fill="none" stroke="C0" stroke-width="2"/><path d="M8 3c0 1.6 1.6 1.6 1.6 3.4M12 3c0 1.6 1.6 1.6 1.6 3.4" fill="none" stroke="C1" stroke-width="1.8" stroke-linecap="round"/>',
+  ocean:'<path d="M2 9.5c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1" fill="none" stroke="C0" stroke-width="2.4" stroke-linecap="round"/><path d="M2 15.5c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1" fill="none" stroke="C1" stroke-width="2.4" stroke-linecap="round"/>',
+  forest:'<path d="M4.5 19.5C4.5 10.5 10.5 4 20 4c0 9.5-6.5 15.5-15.5 15.5z" fill="C0"/><path d="M5 19 14 10" stroke="BG" stroke-width="1.8" stroke-linecap="round"/>',
+  twilight:'<path d="M5 15a7 7 0 0 1 14 0z" fill="C3"/><path d="M2 15h20" stroke="C0" stroke-width="2" stroke-linecap="round"/><path d="M6 19h12" stroke="C1" stroke-width="2" stroke-linecap="round"/>',
+  sakura:[0,1,2,3,4].map(k=>`<ellipse cx="12" cy="6.6" rx="3.1" ry="4.5" fill="C0" transform="rotate(${k*72} 12 12)"/>`).join('')+'<circle cx="12" cy="12" r="2.2" fill="C3"/>',
+  ember:'<path d="M12 2c1 4 6.5 6 6.5 12a6.5 6.5 0 0 1-13 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1.5-9z" fill="C1"/><path d="M12 12c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="C4"/>',
+  cyber:'<path d="M13.5 2 4.5 14h7l-1 8 9-12h-7z" fill="C3" stroke="C0" stroke-width="1.3" stroke-linejoin="round"/>'
+};
+const themeIcon = (k,size) => { const t=THEMES[k];
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${THEME_ICON[k].replace(/"C([0-4])"/g,(_,i)=>`"${t.tiers[i]}"`).replace(/"BG"/g,`"${t.bg}"`)}</svg>`; };
 const THEME_ORDER=['night','mono','paper','cream','ocean','forest','twilight','sakura','ember','cyber'];
 if(!THEMES[settings.theme]) settings.theme='night';
 const TEXT_NAME={words:'英単語', sentence:'英文', roma:'ローマ字'};
 if(!TEXT_NAME[settings.text]) settings.text='words';
 const MODE_MULT={normal:1, hard:1.5, hardcore:2};
+// 難易度ごとのルール説明（案内・説明カード・遊び方・ボタンの説明はここから作る）
+const MODE_RULE={normal:'ミスするとコンボが途切れ、ゲージが減る',
+  hard:'ミスするとコンボ・フィーバー・ゲージ・コード進行がすべて最初に戻る',
+  hardcore:'1回ミスした時点でゲーム終了'};
+const MODE_ICON={normal:'', hard:'☠', hardcore:'☠☠'};
+const modeLabel = m => `${MODE_ICON[m]?MODE_ICON[m]+' ':''}${({normal:'ノーマル',hard:'ハード',hardcore:'ハードコア'})[m]} ×${MODE_MULT[m]}`;
+if(!settings.seenRules || typeof settings.seenRules!=='object') settings.seenRules={};
 if(!MODE_MULT[settings.mode]) settings.mode='normal';
 const theme = () => THEMES[settings.theme];
 const hexRgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(',');
@@ -617,14 +699,14 @@ function applyTheme(){
   root.style.setProperty('--crit',critC()); root.style.setProperty('--hi',t.hi);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.bg);
   $('#favicon').href='data:image/svg+xml,'+encodeURIComponent(faviconSVG(t));
-  $('#themeSw').style.background=`linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)`;
+  $('#themeSw').innerHTML=themeIcon(settings.theme,16);
   themePanel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings.theme));
   setTier(tier);
 }
 /* テーマ一覧パネル：ヘッダーのボタンで開閉 */
 const themePanel=$('#themePanel'), themeBtn=$('#themeBtn');
 themePanel.innerHTML=THEME_ORDER.map(k=>{ const t=THEMES[k];
-  return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span>${t.name}</button>`; }).join('');
+  return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${themeIcon(k,26)}<span class="bars">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span></span>${t.name}</button>`; }).join('');
 function setThemePanel(open){ themePanel.hidden=!open; themeBtn.setAttribute('aria-expanded',String(open)); }
 themeBtn.addEventListener('click',e=>{ e.stopPropagation(); themeBtn.blur(); setThemePanel(themePanel.hidden); });
 themePanel.addEventListener('click',e=>{ e.stopPropagation(); const b=e.target.closest('button'); if(!b) return;
@@ -641,16 +723,9 @@ document.querySelectorAll('.group').forEach(g=>{
       saveSettings(); syncOpts(); b.blur(); initAudio();
       if(key==='fx') fxPreview(b);
       if(key==='dur'||key==='mode'||key==='text') restart();
+      if(key==='mode') showRuleCard(settings.mode);
     });
   });
-});
-/* 演出の強さのアイコン：光の線の本数と長さで段階を表す */
-document.querySelectorAll('.group[data-key="fx"] button').forEach(b=>{
-  const [n,r1,dot,w]=[[4,5.5,2,1.6],[4,9,2.3,2],[8,10.5,2.6,2]][b.dataset.v];
-  let h=`<circle cx="12" cy="12" r="${dot}" fill="currentColor"/>`;
-  for(let i=0;i<n;i++){ const a=i/n*Math.PI*2-Math.PI/2, c=Math.cos(a), sn=Math.sin(a), r0=dot+1.6;
-    h+=`<line x1="${(12+c*r0).toFixed(1)}" y1="${(12+sn*r0).toFixed(1)}" x2="${(12+c*r1).toFixed(1)}" y2="${(12+sn*r1).toFixed(1)}" stroke="currentColor" stroke-width="${w}" stroke-linecap="round"/>`; }
-  b.innerHTML=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${h}</svg>`;
 });
 /* 演出の強さを選んだとき、その強さのお試し演出を出す */
 function fxPreview(b){
@@ -660,12 +735,25 @@ function fxPreview(b){
   if(settings.fx===2){ spark(x,y,14,hi(),5,1.4); ring(x,y,hi(),70,1.2); }
   sfx.key();
 }
+/* ハード系を初めて選んだときだけ出す説明カード */
+function showRuleCard(m){
+  if(m==='normal' || settings.seenRules[m]) return;
+  settings.seenRules[m]=true; saveSettings();
+  const c=$('#ruleCard'); c.querySelector('b').textContent=modeLabel(m); c.querySelector('p').textContent=MODE_RULE[m]; c.hidden=false;
+}
+const hideRuleCard = () => { $('#ruleCard').hidden=true; };
+$('#ruleOk').addEventListener('click',e=>{ e.stopPropagation(); hideRuleCard(); });
+document.querySelectorAll('.group[data-key="mode"] button').forEach(b=>{ const m=b.dataset.v; b.title=`${modeLabel(m)}：${MODE_RULE[m]}`; });
 const soundBtn=$('#soundBtn');
 soundBtn.addEventListener('click',()=>{ settings.sound=!settings.sound; saveSettings(); syncOpts(); soundBtn.blur(); initAudio(); sfx.key(); });
 function syncOpts(){
   document.querySelectorAll('.group').forEach(g=>{
     g.querySelectorAll('button').forEach(b=>b.classList.toggle('on', String(settings[g.dataset.key])===b.dataset.v));
   });
+  // 演出メーター：今の段階以下の棒を点灯
+  document.querySelectorAll('.meter button').forEach(b=>{ const v=Number(b.dataset.v);
+    b.classList.toggle('lit',v<=settings.fx); b.setAttribute('aria-pressed',String(v===settings.fx)); });
+  const rh=$('#ruleHint'); rh.textContent=`${modeLabel(settings.mode)}：${MODE_RULE[settings.mode]}`; rh.classList.toggle('danger',settings.mode!=='normal');
   soundBtn.classList.toggle('muted',!settings.sound); soundBtn.setAttribute('aria-pressed',String(settings.sound));
   soundBtn.title=soundBtn.ariaLabel = settings.sound ? '音：オン' : '音：オフ';
   $('#playBox').classList.toggle('hard',settings.mode==='hard'); $('#playBox').classList.toggle('hardcore',settings.mode==='hardcore');
@@ -1238,7 +1326,7 @@ function restart(){
   secKeys=[]; missMap={}; crit=[]; critN=0;
   runBest=bestFor(settings.text,settings.mode,settings.dur); bestHit=false; syncBestTag();
   setTier(0);
-  $('#result').hidden=true; $('#rNew').hidden=true; $('#rFail').hidden=true; $('#records').hidden=true; recView=null; $('#game').hidden=false;
+  $('#result').hidden=true; $('#rNew').hidden=true; $('#rFail').hidden=true; $('#records').hidden=true; $('#help').hidden=true; view=null; $('#game').hidden=false;
   syncScroll();
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
@@ -1344,38 +1432,94 @@ const fmtDate = t => { if(!t) return '-'; const d=new Date(t), p=n=>String(n).pa
   return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const dash = v => v==null ? '-' : v;
 
-let recView=null, recCat=0, recText='words', lastRunDate=0;
+let recText='words', recMode='normal', recDur=30, recTab='rank', lastRunDate=0;
+const fmtDay = t => { if(!t) return '-'; const d=new Date(t); return `${d.getMonth()+1}/${d.getDate()}`; };
+const catChip = r => [TEXT_NAME[textOf(r)], MODE_ICON[r.mode], r.dur+'s'].filter(Boolean).join('・');
+const catName = (t,m,d) => `${TEXT_NAME[t]}・${MODE_NAME[m]}・${d}秒`;
 function renderRecords(){
-  const runs=loadRecords().runs, [mode,dur]=CATS[recCat];
-  $('#recTextTabs').innerHTML=TEXTS.map(t=>`<button role="tab" data-t="${t}" class="${t===recText?'on':''}" aria-selected="${t===recText}">${TEXT_NAME[t]}</button>`).join('');
-  $('#recTabs').innerHTML=CATS.map(([m,d],i)=>`<button role="tab" data-i="${i}" class="${i===recCat?'on':''}" aria-selected="${i===recCat}">${MODE_NAME[m]} ${d}秒</button>`).join('');
-  const rank=ranking(runs,recText,mode,dur);
-  $('#recRank').innerHTML = rank.length ? '<table><tr><th>#</th><th>スコア</th><th>WPM</th><th class="acc">正確率</th><th>日付</th></tr>'+
-    rank.map((r,i)=>`<tr class="${r.date&&r.date===lastRunDate?'now':''}"><td>${i+1}</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td class="acc">${r.acc==null?'-':r.acc+'%'}</td><td>${fmtDate(r.date)}</td></tr>`).join('')+'</table>'
-    : '<p class="empty">まだ記録がありません</p>';
-  const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
-  $('#recHist').innerHTML = hist.length ? '<table><tr><th>日付</th><th>モード</th><th>スコア</th><th>WPM</th><th class="acc">正確率</th></tr>'+
-    hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${TEXT_NAME[textOf(r)]}/${MODE_NAME[r.mode]}/${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td class="acc">${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
-    : '<p class="empty">まだ記録がありません</p>';
+  const runs=loadRecords().runs, isNow = r => r.date && r.date===lastRunDate;
+  const seg=(id,label,cur,opts)=>`<div class="seg" data-f="${id}"><span>${label}</span>${opts.map(([v,t,ti])=>`<button data-v="${v}" class="${String(cur)===String(v)?'on':''}"${ti?` title="${ti}"`:''}>${t}</button>`).join('')}</div>`;
+  $('#recFilters').innerHTML =
+    seg('text','出題',recText,TEXTS.map(t=>[t,TEXT_NAME[t]]))+
+    seg('mode','難易度',recMode,[['normal','ノーマル'],['hard','☠','ハード'],['hardcore','☠☠','ハードコア']])+
+    seg('dur','時間',recDur,[[30,'30s'],[60,'60s']]);
+  const rank=ranking(runs,recText,recMode,recDur), top=rank[0];
+  // 自己ベストのカード
+  if(top){
+    const st=[[top.wpm,'WPM'],[top.acc!=null?top.acc+'%':null,'正確率'],[top.combo,'最大コンボ'],[top.stage?STAGE_NAMES[top.stage]:null,'最高ステージ']]
+      .filter(([v])=>v!=null).map(([v,l])=>`<span><b>${v}</b>${l}</span>`).join('');
+    cardShareText=runShareText(top,'自己ベスト');
+    $('#bestCard').innerHTML=`<div class="bc-share"><button data-sh="copy">コピー</button><button data-sh="x">Xに投稿</button>${navigator.share?'<button data-sh="native">共有</button>':''}</div>
+      <div class="bc-label"><b>自己ベスト</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
+      <div class="bc-score">${top.score.toLocaleString()}<small>pts</small></div>
+      <div class="bc-stats">${st}<span>${fmtDate(top.date)}</span></div>`;
+  } else $('#bestCard').innerHTML=`<div class="bc-empty">まだ記録がありません<small>${catName(recText,recMode,recDur)} で遊んでみよう</small></div>`;
+  document.querySelectorAll('.rec-tabs button').forEach(b=>{ const on=b.dataset.tab===recTab; b.classList.toggle('on',on); b.setAttribute('aria-selected',String(on)); });
+  // ランキング（2位以降。1位はカード）／最近のプレイ
+  if(recTab==='rank'){
+    $('#recList').innerHTML = rank.length>1 ? rank.slice(1).map((r,i)=>`<div class="rrow${isNow(r)?' now':''}"><span class="rk r${i+2}">${i+2}</span>
+      <span class="sc">${r.score.toLocaleString()}</span><span class="bar"><i style="width:${Math.max(3,r.score/top.score*100).toFixed(1)}%"></i></span>
+      <span class="wpm">${dash(r.wpm)}<small>WPM</small></span><span class="dt">${fmtDay(r.date)}</span></div>`).join('')
+      : `<p class="empty">${top?'2位以降の記録はまだありません':'この条件の記録はまだありません'}</p>`;
+  } else {
+    const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
+    $('#recList').innerHTML = hist.length ? hist.map(r=>`<div class="hrow2${isNow(r)?' now':''}"><span class="dt">${fmtDate(r.date)}</span>
+      <span class="chip" title="${catName(textOf(r),r.mode,r.dur)}">${catChip(r)}</span><span class="sc">${r.score.toLocaleString()}</span>
+      <span class="wpm">${dash(r.wpm)}<small>WPM</small></span></div>`).join('') : '<p class="empty">まだ記録がありません</p>';
+  }
 }
+$('#recFilters').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const f=b.closest('.seg').dataset.f, v=b.dataset.v;
+  if(f==='text') recText=v; else if(f==='mode') recMode=v; else recDur=Number(v); renderRecords(); });
+document.querySelector('.rec-tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recTab=b.dataset.tab; renderRecords(); });
 const syncScroll = () => document.body.classList.toggle('scrollable', $('#game').hidden); // 結果・記録画面は縦スクロール可
-function openRecords(){
+/* 遊び方：数値はゲームの定数から作る */
+function renderHelp(){
+  const row=(n,x,d,cls='')=>`<div class="hrow ${cls}"><span class="n">${n}</span><span class="x">${x}</span><span class="d">${d}</span></div>`;
+  const tiers=theme().tiers;
+  $('#helpBody').innerHTML=[
+    `<section><h3>難易度</h3>${['normal','hard','hardcore'].map(m=>row(`${MODE_ICON[m]} ${MODE_NAME[m]}`,'×'+MODE_MULT[m],MODE_RULE[m],m==='normal'?'':'danger')).join('')}
+      <p>ヘッダーの <b>☠</b>（ハード）と <b>☠☠</b>（ハードコア）で切り替え。選んでいるものをもう一度押すとノーマル。</p></section>`,
+    `<section><h3>コンボ</h3>${TIERS.map((t,i)=>row(`<i class="sw" style="background:${tiers[i]}"></i>${t.at}〜`,'×'+TIER_MULT[i],['','ベースが入る','和音が入る','',''][i])).join('')}
+      <p>正しく打つたびにコンボが増え、色と倍率が上がる。ミスすると0に戻る。</p></section>`,
+    `<section><h3>フィーバー</h3>${STAGE_NAMES.slice(1).map((n,i)=>row(n,'×'+STAGE_MULT[i+1],'BPM '+STAGE_BPM[i+1])).join('')}
+      <p>正しく打つとゲージが増え、<b>満タンで1つ上の段階</b>へ。フィーバー中はゲージが減り続け、<b>0で1段階下がる</b>。上の段階ほど貯まりにくく、早く減る。</p></section>`,
+    `<section><h3>スコア</h3>
+      <p><b>1打</b>：10点 × 倍率</p>
+      <p><b>単語を打ち切る</b>：（文字数×25 ＋ 連続正解×5）× 倍率</p>
+      <p><b>倍率</b>：コンボ × フィーバー × 難易度</p>
+      <p><b style="color:var(--crit)">CRITICAL</b>：金色の単語を打ち切ると ×3。途中でミスすると金色は消える。</p>
+      <p>プレイ中は自己ベストまでの差が出て、超えると NEW RECORD。</p></section>`,
+    `<section><h3>出題モード</h3>
+      <p><b>英単語</b>：ランダムな英単語。スペースで次へ。</p>
+      <p><b>英文</b>：短い英文を単語ごとに打つ。スペースで次へ。</p>
+      <p><b>ローマ字</b>：日本語の文を文節ごとに打つ。shi/si、tsu/tu、ん の nn など好きな綴りでよい。打ち切ると自動で次へ（スペース不要）。</p></section>`,
+    `<section><h3>操作</h3>
+      <p><kbd>Tab</kbd> やり直し　<kbd>Enter</kbd> 結果画面からもう一度　<kbd>Esc</kbd> 記録・遊び方を閉じる</p>
+      <p>スマホは画面をタップしてキーボードを出す。ローマ字モードは英字キーボードで打つ。</p></section>`
+  ].join('');
+}
+/* 記録・遊び方などの画面の開閉。閉じると、開く前の画面（ゲームか結果）に戻る */
+let view=null, viewFrom=null;
+function openView(id,render){
+  if(view) closeView();
   if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
-  recView = ended ? '#result' : '#game';
-  recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur)); recText=settings.text;
+  viewFrom = ended ? '#result' : '#game'; view=id;
   resetKb(); kb.blur();
-  $('#game').hidden=true; $('#result').hidden=true; $('#records').hidden=false;
-  renderRecords(); syncCover(); syncScroll();
+  $('#game').hidden=true; $('#result').hidden=true; $(id).hidden=false;
+  render(); syncCover(); syncScroll();
 }
-function closeRecords(){
-  if(!recView) return;
-  $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover(); syncScroll();
+function closeView(){
+  if(!view) return;
+  $(view).hidden=true; $(viewFrom).hidden=false; view=null; syncCover(); syncScroll();
 }
-$('#recTextTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recText=b.dataset.t; renderRecords(); });
-$('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
-$('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(recView) closeRecords(); else openRecords(); });
+function openRecords(){
+  openView('#records',()=>{ recText=settings.text; recMode=settings.mode; recDur=settings.dur; recTab='rank'; renderRecords(); });
+}
+$('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(view==='#records') closeView(); else openRecords(); });
 $('#recBtn2').addEventListener('click',openRecords);
-$('#recClose').addEventListener('click',()=>{ closeRecords(); if(touchOnly && !ended) focusKb(); });
+$('#recClose').addEventListener('click',()=>{ closeView(); if(touchOnly && !ended) focusKb(); });
+$('#helpBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(view==='#help') closeView(); else openView('#help',renderHelp); });
+$('#helpClose').addEventListener('click',()=>{ closeView(); if(touchOnly && !ended) focusKb(); });
 
 /* 結果の詳細：WPMの推移グラフ（3秒移動平均）とミスの多いキー */
 function renderDetail(T){
@@ -1395,10 +1539,13 @@ function renderDetail(T){
 
 /* 結果のシェア */
 let shareText='';
-function makeShareText(wpm,acc){
+/* 記録1件からシェア用の文を作る。古い記録でない項目は省く */
+function runShareText(r,label){
   const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
-  return `typeburst ${score.toLocaleString()}pts [${TEXT_NAME[settings.text]} ${MODE_NAME[settings.mode]} ${settings.dur}秒] ${wpm}WPM 正確率${acc}% 最大${maxCombo}combo`+
-    (maxStage?` ${STAGE_NAMES[maxStage]}`:'')+url;
+  const p=[`typeburst ${label} ${r.score.toLocaleString()}pts [${TEXT_NAME[textOf(r)]} ${MODE_NAME[r.mode]} ${r.dur}秒]`];
+  if(r.wpm!=null) p.push(r.wpm+'WPM'); if(r.acc!=null) p.push(`正確率${r.acc}%`);
+  if(r.combo!=null) p.push(`最大${r.combo}combo`); if(r.stage) p.push(STAGE_NAMES[r.stage]);
+  return p.join(' ')+url;
 }
 function copyText(t){
   if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
@@ -1406,12 +1553,19 @@ function copyText(t){
     document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy') ? ok() : ng(); }catch(e){ ng(e); } ta.remove(); });
 }
 function flashLabel(b,text){ const o=b.dataset.label||(b.dataset.label=b.textContent); b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.textContent=o,1500); }
-$('#shCopy').addEventListener('click',e=>{ const b=e.currentTarget; b.blur();
-  copyText(shareText).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした')); });
-$('#shX').addEventListener('click',e=>{ e.currentTarget.blur();
-  window.open('https://x.com/intent/post?text='+encodeURIComponent(shareText),'_blank','noopener'); });
+/* シェアの操作（結果画面と自己ベストのカードで共用）。kind: copy / x / native */
+function doShare(kind,text,b){
+  b.blur();
+  if(kind==='copy') copyText(text).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした'));
+  else if(kind==='x') window.open('https://x.com/intent/post?text='+encodeURIComponent(text),'_blank','noopener');
+  else navigator.share({text}).catch(()=>{});
+}
+$('#shCopy').addEventListener('click',e=>doShare('copy',shareText,e.currentTarget));
+$('#shX').addEventListener('click',e=>doShare('x',shareText,e.currentTarget));
 $('#shNative').hidden = !navigator.share;
-$('#shNative').addEventListener('click',e=>{ e.currentTarget.blur(); navigator.share({text:shareText}).catch(()=>{}); });
+$('#shNative').addEventListener('click',e=>doShare('native',shareText,e.currentTarget));
+let cardShareText='';
+$('#bestCard').addEventListener('click',e=>{ const b=e.target.closest('button[data-sh]'); if(b) doShare(b.dataset.sh,cardShareText,b); });
 
 function end(failedAt){ // failedAt: ハードコアでミスした時点の経過秒数
   const T=failedAt||settings.dur;
@@ -1421,12 +1575,13 @@ function end(failedAt){ // failedAt: ハードコアでミスした時点の経�
   const wpm=Math.round(okChars/5/(T/60));
   const acc=allKeys?Math.round(okKeys/allKeys*100):0;
   lastRunDate=Date.now();
-  const {isBest, best} = addRun({score, text:settings.text, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
-    stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate});
+  const run={score, text:settings.text, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
+    stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate};
+  const {isBest, best} = addRun(run);
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rCrit').textContent=critN; $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
-  renderDetail(T); shareText=makeShareText(wpm,acc);
+  renderDetail(T); shareText=runShareText(run,'今回の結果');
   $('#rFail').hidden=!failedAt; if(failedAt) $('#rFail').textContent=`ミスで終了（${failedAt.toFixed(1)}秒）`;
   $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
@@ -1459,9 +1614,10 @@ function handleKey(k){
 
 /* 物理キーボード（入力欄にフォーカスがないとき） */
 document.addEventListener('keydown',e=>{
+  if(!$('#ruleCard').hidden){ e.preventDefault(); hideRuleCard(); return; } // 説明カード表示中の打鍵は閉じるだけ
   if(!themePanel.hidden){ e.preventDefault(); setThemePanel(false); return; } // パネル表示中の打鍵は閉じるだけ
   if(e.key==='Tab'){ e.preventDefault(); initAudio(); restart(); return; }
-  if(recView){ if(e.key==='Escape'){ e.preventDefault(); closeRecords(); } return; }
+  if(view){ if(e.key==='Escape'){ e.preventDefault(); closeView(); } return; }
   if(ended){ if(e.key==='Enter'){ e.preventDefault(); restart(); } return; }
   if(e.target===kb) return;               // 入力欄経由の入力は input イベントで処理
   if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing) return;
@@ -1473,7 +1629,7 @@ const kb=$('#kb'), tapcover=$('#tapcover');
 let prevVal='';
 function resetKb(){ kb.value=''; prevVal=''; }
 kb.addEventListener('input',()=>{
-  if(ended || recView){ resetKb(); return; }
+  if(ended || view){ resetKb(); return; }
   const v=kb.value.toLowerCase();
   let i=0; while(i<prevVal.length && i<v.length && prevVal[i]===v[i]) i++;
   for(let k=prevVal.length;k>i;k--) handleKey('Backspace');
@@ -1498,7 +1654,7 @@ $('#again').addEventListener('click',()=>{ initAudio(); restart(); if(touchOnly)
 
 if(touchOnly){
   const rb=$('#restartBtn');
-  $('#hint').innerHTML='<span>ゲージ満タンでフィーバー</span>';
+  $('#hint').innerHTML='<span id="ruleHint"></span><span>ゲージ満タンでフィーバー</span>';
   $('#hint').appendChild(rb);
 }
 
