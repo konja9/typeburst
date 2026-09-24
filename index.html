@@ -206,25 +206,46 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .hrow .d{color:var(--dim)}
 .hrow.danger .n,.hrow.danger .x{color:var(--err)}
 .hrow i.sw{margin-right:.4rem}
-#recTabs{margin-top:-.7rem}
 .rec-head{display:flex; justify-content:space-between; align-items:center; gap:1rem}
 .rec-head h2{margin:0; font-size:22px; font-weight:800}
-.tabs{display:flex; flex-wrap:wrap; gap:.3rem; background:var(--bg2); padding:.35rem; border-radius:10px; align-self:flex-start; font-size:14px}
-.rec-body{display:grid; grid-template-columns:1fr 1fr; gap:1rem 2.4rem; max-height:min(60vh,560px); overflow:auto; overscroll-behavior:contain}
-.rec-body h3{margin:0 0 .5rem; font-size:14px; color:var(--dim); font-weight:400}
-.rec-body table{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
-.rec-body td,.rec-body th{padding:.32rem .4rem; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bg2)}
-.rec-body th{color:var(--dim); font-weight:400}
-.rec-body td:first-child,.rec-body th:first-child{text-align:left}
-.rec-body td.sc{font-weight:800}
-.rec-body tr.now td{color:var(--accent)}
-.rec-body .tw{overflow-x:auto}
-.rec-body .empty{color:var(--dim); font-size:14px; margin:0}
+.rec-filters{display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; font-size:14px}
+.seg{display:flex; align-items:center; gap:.15rem; background:var(--bg2); padding:.25rem .35rem; border-radius:9px}
+.seg > span{color:var(--dim); font-size:12px; margin:0 .35rem 0 .25rem}
+.seg button.on{background:var(--bg); color:var(--accent)}
+.best-card{position:relative; background:var(--bg2); border-radius:14px; padding:1.1rem 1.3rem; border:1px solid color-mix(in srgb, var(--accent) 35%, transparent)}
+.bc-label{color:var(--dim); font-size:13px}
+.bc-label b{color:var(--crit); font-weight:800; margin-right:.5rem}
+.bc-score{font-size:clamp(40px,7vw,64px); font-weight:800; color:var(--accent); line-height:1.1; letter-spacing:-.03em; font-variant-numeric:tabular-nums; margin:.2rem 0 .5rem}
+.bc-score small{font-size:.3em; color:var(--dim); font-weight:400; margin-left:.4em; letter-spacing:0}
+.bc-new{display:inline-block; font-size:12px; font-weight:800; color:var(--bg); background:var(--accent); border-radius:4px; padding:.05rem .4rem; margin-left:.5rem; vertical-align:middle}
+.bc-stats{display:flex; flex-wrap:wrap; gap:.3rem 1.3rem; font-size:13px; color:var(--dim)}
+.bc-stats b{color:var(--text); font-size:16px; font-weight:600; margin-right:.25rem}
+.bc-empty{color:var(--dim); font-size:15px; padding:.6rem 0}
+.bc-empty small{display:block; font-size:13px; margin-top:.3rem}
+.rec-tabs{display:flex; gap:1.2rem; border-bottom:1px solid var(--bg2)}
+.rec-tabs button{padding:.4rem 0; border-radius:0; border-bottom:2px solid transparent; margin-bottom:-1px}
+.rec-tabs button.on{color:var(--text); border-bottom-color:var(--accent)}
+.rec-list{display:flex; flex-direction:column; font-size:14px; font-variant-numeric:tabular-nums}
+.rrow{display:grid; grid-template-columns:2em 6.2em minmax(40px,1fr) 4.4em 3.6em; gap:.7rem; align-items:center; padding:.45rem .2rem; border-bottom:1px solid var(--bg2)}
+.hrow2{display:grid; grid-template-columns:7.2em auto 1fr 4.4em; gap:.7rem; align-items:center; padding:.45rem .2rem; border-bottom:1px solid var(--bg2)}
+.rrow .rk{font-weight:800; color:var(--dim); text-align:center}
+.rk.r2{color:#c3cad6} .rk.r3{color:#d49a6a}
+.rrow .sc,.hrow2 .sc{font-weight:800; text-align:right}
+.rrow .bar{height:6px; background:var(--bg2); border-radius:3px; overflow:hidden}
+.rrow .bar i{display:block; height:100%; background:var(--accent); opacity:.75; border-radius:3px}
+.rrow .wpm,.hrow2 .wpm{text-align:right}
+.rrow small,.hrow2 small{color:var(--dim); font-size:.75em; margin-left:.15em}
+.rrow .dt,.hrow2 .dt{color:var(--dim); font-size:13px}
+.rrow .dt{text-align:right}
+.hrow2 .chip{font-size:12px; color:var(--text); background:var(--bg2); border-radius:6px; padding:.1rem .45rem; white-space:nowrap}
+.rrow.now,.hrow2.now{background:color-mix(in srgb, var(--accent) 10%, transparent)}
+.rrow.now .sc,.hrow2.now .sc{color:var(--accent)}
+.rec-list .empty{color:var(--dim); margin:.8rem 0}
 @media (max-width:700px){
   .help-body{grid-template-columns:1fr}
-  .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
-  .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
-  .rec-body .acc{display:none}
+  .rrow{grid-template-columns:1.6em 5.4em minmax(30px,1fr) 3.8em 3.2em; gap:.45rem; font-size:13px}
+  .hrow2{grid-template-columns:auto auto 1fr 3.8em; gap:.45rem; font-size:13px}
+  .best-card{padding:.9rem 1rem}
   body{place-items:start center}
   #cam{padding-top:1rem; padding-bottom:1.5rem}
   #stage{gap:1.4rem}
@@ -316,12 +337,10 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 
   <section id="records" hidden>
     <div class="rec-head"><h2>記録</h2><button id="recClose">閉じる <kbd>Esc</kbd></button></div>
-    <div class="tabs" id="recTextTabs" role="tablist"></div>
-    <div class="tabs" id="recTabs" role="tablist"></div>
-    <div class="rec-body">
-      <div><h3>ランキング（上位10件）</h3><div id="recRank" class="tw"></div></div>
-      <div><h3>最近のプレイ（20件）</h3><div id="recHist" class="tw"></div></div>
-    </div>
+    <div class="rec-filters" id="recFilters"></div>
+    <div class="best-card" id="bestCard"></div>
+    <div class="rec-tabs" role="tablist"><button role="tab" data-tab="rank">ランキング</button><button role="tab" data-tab="hist">最近のプレイ</button></div>
+    <div class="rec-list" id="recList"></div>
   </section>
 </main></div>
 <canvas id="fx"></canvas>
@@ -1410,20 +1429,43 @@ const fmtDate = t => { if(!t) return '-'; const d=new Date(t), p=n=>String(n).pa
   return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const dash = v => v==null ? '-' : v;
 
-let recCat=0, recText='words', lastRunDate=0;
+let recText='words', recMode='normal', recDur=30, recTab='rank', lastRunDate=0;
+const fmtDay = t => { if(!t) return '-'; const d=new Date(t); return `${d.getMonth()+1}/${d.getDate()}`; };
+const catChip = r => [TEXT_NAME[textOf(r)], MODE_ICON[r.mode], r.dur+'s'].filter(Boolean).join('・');
+const catName = (t,m,d) => `${TEXT_NAME[t]}・${MODE_NAME[m]}・${d}秒`;
 function renderRecords(){
-  const runs=loadRecords().runs, [mode,dur]=CATS[recCat];
-  $('#recTextTabs').innerHTML=TEXTS.map(t=>`<button role="tab" data-t="${t}" class="${t===recText?'on':''}" aria-selected="${t===recText}">${TEXT_NAME[t]}</button>`).join('');
-  $('#recTabs').innerHTML=CATS.map(([m,d],i)=>`<button role="tab" data-i="${i}" class="${i===recCat?'on':''}" aria-selected="${i===recCat}">${MODE_NAME[m]} ${d}秒</button>`).join('');
-  const rank=ranking(runs,recText,mode,dur);
-  $('#recRank').innerHTML = rank.length ? '<table><tr><th>#</th><th>スコア</th><th>WPM</th><th class="acc">正確率</th><th>日付</th></tr>'+
-    rank.map((r,i)=>`<tr class="${r.date&&r.date===lastRunDate?'now':''}"><td>${i+1}</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td class="acc">${r.acc==null?'-':r.acc+'%'}</td><td>${fmtDate(r.date)}</td></tr>`).join('')+'</table>'
-    : '<p class="empty">まだ記録がありません</p>';
-  const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
-  $('#recHist').innerHTML = hist.length ? '<table><tr><th>日付</th><th>モード</th><th>スコア</th><th>WPM</th><th class="acc">正確率</th></tr>'+
-    hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${TEXT_NAME[textOf(r)]}/${MODE_NAME[r.mode]}/${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td class="acc">${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
-    : '<p class="empty">まだ記録がありません</p>';
+  const runs=loadRecords().runs, isNow = r => r.date && r.date===lastRunDate;
+  const seg=(id,label,cur,opts)=>`<div class="seg" data-f="${id}"><span>${label}</span>${opts.map(([v,t,ti])=>`<button data-v="${v}" class="${String(cur)===String(v)?'on':''}"${ti?` title="${ti}"`:''}>${t}</button>`).join('')}</div>`;
+  $('#recFilters').innerHTML =
+    seg('text','出題',recText,TEXTS.map(t=>[t,TEXT_NAME[t]]))+
+    seg('mode','難易度',recMode,[['normal','ノーマル'],['hard','☠','ハード'],['hardcore','☠☠','ハードコア']])+
+    seg('dur','時間',recDur,[[30,'30s'],[60,'60s']]);
+  const rank=ranking(runs,recText,recMode,recDur), top=rank[0];
+  // 自己ベストのカード
+  if(top){
+    const st=[[top.wpm,'WPM'],[top.acc!=null?top.acc+'%':null,'正確率'],[top.combo,'最大コンボ'],[top.stage?STAGE_NAMES[top.stage]:null,'最高ステージ']]
+      .filter(([v])=>v!=null).map(([v,l])=>`<span><b>${v}</b>${l}</span>`).join('');
+    $('#bestCard').innerHTML=`<div class="bc-label"><b>自己ベスト</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
+      <div class="bc-score">${top.score.toLocaleString()}<small>pts</small></div>
+      <div class="bc-stats">${st}<span>${fmtDate(top.date)}</span></div>`;
+  } else $('#bestCard').innerHTML=`<div class="bc-empty">まだ記録がありません<small>${catName(recText,recMode,recDur)} で遊んでみよう</small></div>`;
+  document.querySelectorAll('.rec-tabs button').forEach(b=>{ const on=b.dataset.tab===recTab; b.classList.toggle('on',on); b.setAttribute('aria-selected',String(on)); });
+  // ランキング（2位以降。1位はカード）／最近のプレイ
+  if(recTab==='rank'){
+    $('#recList').innerHTML = rank.length>1 ? rank.slice(1).map((r,i)=>`<div class="rrow${isNow(r)?' now':''}"><span class="rk r${i+2}">${i+2}</span>
+      <span class="sc">${r.score.toLocaleString()}</span><span class="bar"><i style="width:${Math.max(3,r.score/top.score*100).toFixed(1)}%"></i></span>
+      <span class="wpm">${dash(r.wpm)}<small>WPM</small></span><span class="dt">${fmtDay(r.date)}</span></div>`).join('')
+      : `<p class="empty">${top?'2位以降の記録はまだありません':'この条件の記録はまだありません'}</p>`;
+  } else {
+    const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
+    $('#recList').innerHTML = hist.length ? hist.map(r=>`<div class="hrow2${isNow(r)?' now':''}"><span class="dt">${fmtDate(r.date)}</span>
+      <span class="chip" title="${catName(textOf(r),r.mode,r.dur)}">${catChip(r)}</span><span class="sc">${r.score.toLocaleString()}</span>
+      <span class="wpm">${dash(r.wpm)}<small>WPM</small></span></div>`).join('') : '<p class="empty">まだ記録がありません</p>';
+  }
 }
+$('#recFilters').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const f=b.closest('.seg').dataset.f, v=b.dataset.v;
+  if(f==='text') recText=v; else if(f==='mode') recMode=v; else recDur=Number(v); renderRecords(); });
+document.querySelector('.rec-tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recTab=b.dataset.tab; renderRecords(); });
 const syncScroll = () => document.body.classList.toggle('scrollable', $('#game').hidden); // 結果・記録画面は縦スクロール可
 /* 遊び方：数値はゲームの定数から作る */
 function renderHelp(){
@@ -1466,10 +1508,8 @@ function closeView(){
   $(view).hidden=true; $(viewFrom).hidden=false; view=null; syncCover(); syncScroll();
 }
 function openRecords(){
-  openView('#records',()=>{ recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur)); recText=settings.text; renderRecords(); });
+  openView('#records',()=>{ recText=settings.text; recMode=settings.mode; recDur=settings.dur; recTab='rank'; renderRecords(); });
 }
-$('#recTextTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recText=b.dataset.t; renderRecords(); });
-$('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
 $('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(view==='#records') closeView(); else openRecords(); });
 $('#recBtn2').addEventListener('click',openRecords);
 $('#recClose').addEventListener('click',()=>{ closeView(); if(touchOnly && !ended) focusKb(); });
