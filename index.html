@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1d24">
 <title>typeburst</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,15 +12,11 @@
 :root{
   --bg:#1b1d24; --bg2:#23262f; --dim:#565c70; --text:#dde1ec; --err:#ff5c6c;
   --accent:#6ee7f2; --glow:110,231,242;
+  --t0:#6ee7f2; --t1:#9d8cff; --t2:#ff5fa2; --t3:#ffc857; --t4:#7dffb0;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#1b1d24; --bg2:#23262f; --dim:#565c70; --text:#dde1ec; --err:#ff5c6c; }
-}
-:root[data-theme="dark"]{ --bg:#1b1d24; --bg2:#23262f; --dim:#565c70; --text:#dde1ec; --err:#ff5c6c; }
-:root[data-theme="light"]{ --bg:#eceef3; --bg2:#e0e3ea; --dim:#9aa0b0; --text:#2a2e3a; --err:#e0334a; }
 *,*::before,*::after{box-sizing:inherit}
 html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
 body{
@@ -28,6 +25,7 @@ body{
   display:grid; place-items:center;
 }
 [hidden]{display:none!important}
+body.scrollable{overflow-x:hidden; overflow-y:auto}
 #glow{position:fixed; inset:0; pointer-events:none;
   background:radial-gradient(60% 45% at 50% 55%, rgba(var(--glow),.12), transparent 70%); opacity:.5}
 #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:5}
@@ -45,6 +43,9 @@ button{font:inherit; color:var(--dim); background:none; border:0; padding:.25rem
 button:hover{color:var(--text)}
 button.on{color:var(--accent)}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.sw{display:inline-block; width:.85em; height:.85em; border-radius:50%; vertical-align:-.1em; border:2px solid var(--bg2); box-shadow:0 0 0 1px var(--dim)}
+.group[data-key="theme"] button{padding:.25rem .3rem}
+.group[data-key="theme"] button.on .sw{box-shadow:0 0 0 2px var(--text)}
 
 #game{display:flex; flex-direction:column; gap:.9rem}
 .hud{display:flex; align-items:baseline; flex-wrap:wrap; column-gap:1.4rem; row-gap:.2rem; font-size:clamp(20px,2.6vw,30px); min-height:1.5em}
@@ -58,13 +59,14 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 #combo small{font-size:.55em; color:var(--dim); margin-left:.35em}
 #stageTag{display:none; color:var(--accent); font-weight:800; font-size:.7em}
 body.fever #stageTag{display:inline-block; animation:hue 1.2s linear infinite}
+#modeTag{color:var(--err); font-weight:800; font-size:.5em; letter-spacing:.08em; text-transform:uppercase}
 
 #gauge{height:6px; background:var(--bg2); border-radius:3px; overflow:hidden}
 #gauge i{display:block; height:100%; background:var(--accent); transform-origin:left; transform:scaleX(0);
   transition:transform .12s ease-out; box-shadow:0 0 12px var(--accent)}
 #gauge.charged{animation:gshake .09s steps(2) infinite}
 #gauge.charged i{animation:hue .5s linear infinite}
-body.fever #gauge i{background:linear-gradient(90deg,#ff5fa2,#ffc857,#7dffb0,#6ee7f2,#9d8cff)}
+body.fever #gauge i{background:linear-gradient(90deg,var(--t2),var(--t3),var(--t4),var(--t0),var(--t1))}
 @keyframes gshake{50%{transform:translateY(-1.5px)}}
 
 #words-wrap{position:relative; font-size:clamp(20px,2.6vw,30px); line-height:1.6; height:4.8em; overflow:hidden; user-select:none; -webkit-user-select:none}
@@ -109,14 +111,43 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .stats{display:flex; gap:2.4rem; flex-wrap:wrap}
 .stats span{display:block; color:var(--dim); font-size:14px; margin-bottom:.2rem}
 .stats b{font-size:28px; font-weight:600}
+.detail{display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:1.2rem 2.4rem; font-size:14px; color:var(--dim)}
+.chart-head,.chart-axis{display:flex; justify-content:space-between}
+.chart-axis{font-size:12px}
+#rChart{display:block; width:100%; height:84px; margin:.4rem 0 .2rem; overflow:visible}
+#rChart .ln{fill:none; stroke:var(--accent); stroke-width:2; vector-effect:non-scaling-stroke; stroke-linejoin:round}
+#rChart .ar{fill:var(--accent); opacity:.12}
+#rChart .gd{stroke:var(--bg2); stroke-width:1; vector-effect:non-scaling-stroke}
+#rMiss{display:flex; flex-wrap:wrap; gap:.5rem .9rem; margin-top:.6rem; color:var(--text)}
+#rMiss kbd{font-size:16px; color:var(--err)}
 #rNew{color:var(--accent); font-weight:600; margin:0; animation:blink .8s steps(1) 4}
 .actions{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap}
 #again{color:var(--text); background:var(--bg2); padding:.6rem 1.3rem; border-radius:8px}
 #again:hover{color:var(--accent)}
+.share{display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; font-size:14px}
+.share > span{color:var(--dim); margin-right:.3rem}
+.share button{background:var(--bg2); padding:.35rem .8rem}
 
+#recBtn{color:var(--text)}
+#recBtn:hover{color:var(--accent)}
+#records{display:flex; flex-direction:column; gap:1.2rem}
+.rec-head{display:flex; justify-content:space-between; align-items:center; gap:1rem}
+.rec-head h2{margin:0; font-size:22px; font-weight:800}
+.tabs{display:flex; flex-wrap:wrap; gap:.3rem; background:var(--bg2); padding:.35rem; border-radius:10px; align-self:flex-start; font-size:14px}
+.rec-body{display:grid; grid-template-columns:1fr 1fr; gap:1rem 2.4rem; max-height:min(60vh,560px); overflow:auto; overscroll-behavior:contain}
+.rec-body h3{margin:0 0 .5rem; font-size:14px; color:var(--dim); font-weight:400}
+.rec-body table{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
+.rec-body td,.rec-body th{padding:.32rem .4rem; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bg2)}
+.rec-body th{color:var(--dim); font-weight:400}
+.rec-body td:first-child,.rec-body th:first-child{text-align:left}
+.rec-body td.sc{font-weight:800}
+.rec-body tr.now td{color:var(--accent)}
+.rec-body .empty{color:var(--dim); font-size:14px; margin:0}
 @media (max-width:700px){
+  .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
+  .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
   body{place-items:start center}
-  #cam{padding-top:1rem}
+  #cam{padding-top:1rem; padding-bottom:1.5rem}
   #stage{gap:1.4rem}
   header{font-size:13px}
   .opts{gap:.6rem; padding:.35rem .6rem}
@@ -125,6 +156,9 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   .big{font-size:64px}
   .stats{gap:1.4rem}
   .stats b{font-size:22px}
+  #result{gap:1.3rem}
+  .detail{grid-template-columns:1fr}
+  #rChart{height:64px}
 }
 </style>
 </head>
@@ -134,9 +168,12 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   <header>
     <div class="brand">typeburst</div>
     <nav class="opts" aria-label="設定">
+      <div class="group" data-key="mode" data-type="str"><button data-v="normal">ノーマル</button><button data-v="hard">ハード</button></div>
       <div class="group" data-key="dur"><button data-v="30">30秒</button><button data-v="60">60秒</button></div>
       <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
       <div class="group" data-key="fx"><span>演出</span><button data-v="0">弱</button><button data-v="1">中</button><button data-v="2">強</button></div>
+      <div class="group" data-key="theme" data-type="str"><span>テーマ</span></div>
+      <button id="recBtn">記録</button>
     </nav>
   </header>
 
@@ -146,6 +183,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <span><b id="score">0</b><em id="mult">×1</em></span>
       <span id="combo"><b id="comboNum">0</b><small>combo</small></span>
       <span id="stageTag"></span>
+      <span id="modeTag" hidden>hard</span>
     </div>
     <div id="gauge" aria-hidden="true"><i></i></div>
     <div id="words-wrap">
@@ -166,8 +204,24 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div><span>フィーバー</span><b id="rFever">0秒</b></div>
       <div><span>自己ベスト</span><b id="rBest">0</b></div>
     </div>
+    <div class="detail">
+      <div><div class="chart-head"><span>WPMの推移</span><span id="rPeak"></span></div>
+        <svg id="rChart" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="chart-axis"><span>0秒</span><span id="rDur">30秒</span></div></div>
+      <div><span>ミスの多いキー</span><div id="rMiss"></div></div>
+    </div>
     <p id="rNew" hidden>自己ベスト更新</p>
-    <div class="actions"><button id="again">もう一度</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
+    <div class="actions"><button id="again">もう一度</button><button id="recBtn2">記録を見る</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
+    <div class="share"><span>シェア</span><button id="shCopy">コピー</button><button id="shX">Xに投稿</button><button id="shNative" hidden>共有</button></div>
+  </section>
+
+  <section id="records" hidden>
+    <div class="rec-head"><h2>記録</h2><button id="recClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="tabs" id="recTabs" role="tablist"></div>
+    <div class="rec-body">
+      <div><h3>ランキング（上位10件）</h3><div id="recRank"></div></div>
+      <div><h3>最近のプレイ（20件）</h3><div id="recHist"></div></div>
+    </div>
   </section>
 </main></div>
 <canvas id="fx"></canvas>
@@ -184,20 +238,55 @@ const wordsEl=$('#words'), wrap=$('#words-wrap'), caret=$('#caret'), timerEl=$('
 
 /* ---------- settings ---------- */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let settings = {dur:30, sound:true, fx: reduced ? 0 : 1};
+let settings = {mode:'normal', dur:30, sound:true, fx: reduced ? 0 : 1, theme:'night'};
 try{ const s = JSON.parse(localStorage.getItem('typeburst-settings')); if(s) Object.assign(settings, s); }catch(e){}
 function saveSettings(){ try{ localStorage.setItem('typeburst-settings', JSON.stringify(settings)); }catch(e){} }
 const FXM=[.45,1,1.8];
 const mult = () => FXM[settings.fx];
 
+/* ---------- themes ---------- */
+// tiers: コンボ段階 0/20/50/100/200 の色。hi: 強調色（段階アップの文字・リングなど）
+const THEMES={
+  night: {name:'ナイト', bg:'#1b1d24', bg2:'#23262f', dim:'#565c70', text:'#dde1ec', err:'#ff5c6c', hi:'#ffffff',
+          tiers:['#6ee7f2','#9d8cff','#ff5fa2','#ffc857','#7dffb0']},
+  paper: {name:'ペーパー', light:true, bg:'#eceef3', bg2:'#dfe2ea', dim:'#9aa0b0', text:'#2a2e3a', err:'#e0334a', hi:'#1f2330',
+          tiers:['#0892b0','#6a48f0','#dc2f7a','#d08400','#0e9a60']},
+  forest:{name:'フォレスト', bg:'#171f1a', bg2:'#202a23', dim:'#556a5c', text:'#dfe9e1', err:'#ff6b5c', hi:'#ffffff',
+          tiers:['#8fe388','#5fd4b8','#e8d56b','#ff9f5a','#ff7fb6']},
+  ember: {name:'エンバー', bg:'#1f1818', bg2:'#2b2121', dim:'#6e5a58', text:'#f0e2de', err:'#ff4d5e', hi:'#fff6e0',
+          tiers:['#ffb86b','#ff7a59','#ff4f8b','#c77dff','#fff27a']},
+  ocean: {name:'オーシャン', bg:'#0e1829', bg2:'#15233a', dim:'#4d6485', text:'#d8e6f5', err:'#ff6680', hi:'#ffffff',
+          tiers:['#5ab8ff','#4de1d2','#8a8cff','#e36bff','#9dffe0']}
+};
+if(!THEMES[settings.theme]) settings.theme='night';
+const MODE_MULT={normal:1, hard:1.5};
+if(!MODE_MULT[settings.mode]) settings.mode='normal';
+const theme = () => THEMES[settings.theme];
+const hexRgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(',');
+function applyTheme(){
+  const t=theme();
+  ['bg','bg2','dim','text','err'].forEach(k=>root.style.setProperty('--'+k,t[k]));
+  t.tiers.forEach((c,i)=>root.style.setProperty('--t'+i,c));
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.bg);
+  setTier(tier);
+}
+{ const g=document.querySelector('.group[data-key="theme"]');
+  Object.entries(THEMES).forEach(([k,t])=>{
+    const b=document.createElement('button'); b.dataset.v=k; b.title=t.name; b.setAttribute('aria-label','テーマ '+t.name);
+    b.innerHTML=`<i class="sw" style="background:linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)"></i>`;
+    g.appendChild(b);
+  });
+}
+
 document.querySelectorAll('.group').forEach(g=>{
-  const key=g.dataset.key;
+  const key=g.dataset.key, type=g.dataset.type;
   g.querySelectorAll('button').forEach(b=>{
     b.addEventListener('click',()=>{
       const v=b.dataset.v;
-      settings[key] = key==='sound' ? v==='true' : Number(v);
+      settings[key] = type==='str' ? v : key==='sound' ? v==='true' : Number(v);
       saveSettings(); syncOpts(); b.blur(); initAudio();
-      if(key==='dur') restart();
+      if(key==='theme') applyTheme();
+      if(key==='dur'||key==='mode') restart();
     });
   });
 });
@@ -206,21 +295,17 @@ function syncOpts(){
     g.querySelectorAll('button').forEach(b=>b.classList.toggle('on', String(settings[g.dataset.key])===b.dataset.v));
   });
   document.body.classList.toggle('fx0', settings.fx===0);
+  $('#modeTag').hidden = settings.mode!=='hard';
 }
 
 /* ---------- tiers (combo) ---------- */
-const TIERS=[
-  {at:0,  c:'#6ee7f2', rgb:'110,231,242'},
-  {at:20, c:'#9d8cff', rgb:'157,140,255'},
-  {at:50, c:'#ff5fa2', rgb:'255,95,162'},
-  {at:100,c:'#ffc857', rgb:'255,200,87'},
-  {at:200,c:'#7dffb0', rgb:'125,255,176'}
-];
+const TIERS=[0,20,50,100,200].map(at=>({at}));
 const TIER_MULT=[1,2,3,4,5];
 let tier=0;
 const tierOf = c => { let t=0; TIERS.forEach((x,i)=>{ if(c>=x.at) t=i; }); return t; };
-const accent = () => TIERS[tier].c;
-function setTier(t){ tier=t; root.style.setProperty('--accent',TIERS[t].c); root.style.setProperty('--glow',TIERS[t].rgb); }
+const accent = () => theme().tiers[tier];
+const hi = () => theme().hi, errC = () => theme().err;
+function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.style.setProperty('--glow',hexRgb(accent())); }
 
 /* ---------- audio core ---------- */
 let ac=null, master=null, noiseBuf=null;
@@ -346,7 +431,7 @@ const GAIN_KEY=[1.6,1.5,1.4,1.3], GAIN_WORD=4, DRAIN=[0,3,4,5];
 let gauge=0, fstage=0, maxStage=0, feverT0=0, feverTime=0, schedId=0, step=0, nextT=0, lastMult=1;
 const clock = () => ac ? ac.currentTime : performance.now()/1000;
 const bpm = () => STAGE_BPM[fstage]+Math.min(12,combo/20);
-const multiplier = () => TIER_MULT[tier]*STAGE_MULT[fstage];
+const multiplier = () => TIER_MULT[tier]*STAGE_MULT[fstage]*MODE_MULT[settings.mode];
 
 function addGauge(d){
   if(ended) return;
@@ -382,10 +467,10 @@ function stageUp(){
   gauge = fstage<3 ? 35 : 100;
   riserStop(); sfx.drop(fstage); setStageClass(); updateMultUI();
   const m=mult(), [x,,r]=center(wrap), cy=r.top+r.height/2;
-  floatText(x,r.top-16,STAGE_NAMES[fstage],fstage>=3?'#ffffff':accent(),34+fstage*8,true);
-  for(let i=0;i<=fstage;i++) ring(x,cy,i%2?'#ffffff':accent(),Math.max(W,H)*(.3+i*.2),(6-i)*m);
+  floatText(x,r.top-16,STAGE_NAMES[fstage],fstage>=3?hi():accent(),34+fstage*8,true);
+  for(let i=0;i<=fstage;i++) ring(x,cy,i%2?hi():accent(),Math.max(W,H)*(.3+i*.2),(6-i)*m);
   spark(x,cy,Math.round((60+fstage*40)*m),accent(),9+fstage*2,2.6);
-  if(fstage>=2) spark(x,cy,Math.round(40*m),'#ffffff',12,2);
+  if(fstage>=2) spark(x,cy,Math.round(40*m),hi(),12,2);
   flash.animate([{opacity:(.18+fstage*.06)*Math.min(m,1.4)},{opacity:0}],{duration:520,easing:'ease-out'});
   shake=Math.max(shake,(8+fstage*3)*m);
   camPunch(1.04+fstage*.025);
@@ -395,11 +480,22 @@ function stageDown(){
   if(fstage===0){ clearInterval(schedId); feverTime+=(performance.now()-feverT0)/1000; gauge=0; }
   else gauge=60;
   setStageClass(); updateMultUI(); camPunch(.97);
-  const [x,,r]=center(wrap); floatText(x,r.top-10,fstage?'stage down':'fever end','#ff5c6c',22);
+  const [x,,r]=center(wrap); floatText(x,r.top-10,fstage?'stage down':'fever end',errC(),22);
 }
 function stopFever(){
   if(fstage>0) feverTime+=(performance.now()-feverT0)/1000;
   fstage=0; clearInterval(schedId); riserStop(); setStageClass();
+}
+/* ハードモード：ミス1回でコンボ・フィーバー・ゲージ・コード進行をすべて最初に戻す */
+function hardReset(){
+  const lost = combo>0 || gauge>0 || fstage>0;
+  if(fstage>0) sfx.down();
+  stopFever(); gauge=0; chordIdx=0; noteIdx=0; step=0;
+  breakCombo(); syncGauge();
+  if(!lost) return;
+  const m=mult(), [x,,r]=center(wrap);
+  floatText(x,r.top-10,'reset',errC(),26,true);
+  shake=Math.max(shake,9*m); camPunch(.96);
 }
 function schedule(){ while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=60/bpm()/4; step++; } }
 function playStep(s,t){
@@ -463,7 +559,7 @@ function arrive(s){
 }
 function loop(){
   cx.clearRect(0,0,W,H);
-  cx.globalCompositeOperation='lighter'; cx.lineCap='round';
+  cx.globalCompositeOperation=theme().light?'source-over':'lighter'; cx.lineCap='round';
   // speed lines
   if(fstage>0){ const n=[1,2,4][settings.fx]*fstage;
     for(let i=0;i<n;i++) lines.push({x:W+60,y:Math.random()*H,vx:-(18+Math.random()*26)*(1+fstage*.2),len:40+Math.random()*140}); }
@@ -521,16 +617,16 @@ function fxKey(span){ const m=mult(), [x,y]=center(span);
 function fxWord(el,P){ const m=mult(), [x,y,r]=center(el), c=accent();
   spark(x,y,Math.round((14+tier*8+fstage*8)*m),c,4+tier,2.2);
   ring(x,y,c,(40+tier*16)*m+r.width*.4,3);
-  if(tier>=2||fstage>=2) ring(x,y,'#ffffff',(70+tier*20)*m,1.5);
+  if(tier>=2||fstage>=2) ring(x,y,hi(),(70+tier*20)*m,1.5);
   const mu=multiplier();
-  floatText(x,r.top-4,'+'+P.toLocaleString(),fstage>=3?'#ffffff':c,Math.min(15+mu*1.2,32),true,true);
+  floatText(x,r.top-4,'+'+P.toLocaleString(),fstage>=3?hi():c,Math.min(15+mu*1.2,32),true,true);
   shatter(el,P,c);
   glow.animate([{opacity:.5+.4*Math.min(m,1.2)},{opacity:.5}],{duration:350,easing:'ease-out'});
   if(fstage>=2) camPunch(1.012);
 }
 function fxMiss(span){ const m=mult(), [x,y]=center(span);
   shake=Math.max(shake,5*m);
-  spark(x,y,Math.round(6*m),'#ff5c6c',2.5,1.4);
+  spark(x,y,Math.round(6*m),errC(),2.5,1.4);
 }
 function fxTier(){ const m=mult(), [x,y,r]=center(wrap);
   ring(x,y,accent(),Math.max(W,H)*.4,4*m);
@@ -544,6 +640,7 @@ function fxTier(){ const m=mult(), [x,y,r]=center(wrap);
 /* ---------- game ---------- */
 let words=[], wordEls=[], wi=0, firstVis=0, typed='', started=false, ended=false, t0=0, timerId=0, lastSec=0;
 let combo=0, maxCombo=0, streak=0, okKeys=0, allKeys=0, okChars=0, lineH=0;
+let secKeys=[], missMap={}; // 1秒ごとの正解打鍵の累計、キーごとのミス数
 const esc = c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c);
 const pick = () => WORD_LIST[Math.random()*WORD_LIST.length|0];
 
@@ -590,8 +687,10 @@ function restart(){
   shards.length=0; lines.length=0; chordIdx=0; noteIdx=0;
   words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed='';
   started=false; ended=false; combo=0; maxCombo=0; streak=0; okKeys=0; allKeys=0; okChars=0;
+  secKeys=[]; missMap={};
   setTier(0);
-  $('#result').hidden=true; $('#rNew').hidden=true; $('#game').hidden=false;
+  $('#result').hidden=true; $('#rNew').hidden=true; $('#records').hidden=true; recView=null; $('#game').hidden=false;
+  syncScroll();
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
   addWords(80); updateCombo(false); updateMultUI(); syncGauge();
@@ -607,6 +706,7 @@ function tickTimer(){
   const rem=settings.dur-(performance.now()-t0)/1000;
   if(rem<=0){ timerEl.textContent='0'; end(); return; }
   if(fstage>0) addGauge(-DRAIN[fstage]*.05);
+  while(secKeys.length<Math.floor(settings.dur-rem)) secKeys.push(okKeys);
   const sec=Math.ceil(rem);
   if(sec!==lastSec){
     lastSec=sec; timerEl.textContent=sec;
@@ -629,10 +729,12 @@ function onChar(ch){
     noteIdx++; if(!fstage && noteIdx%16===0) chordIdx++;
     const nt=tierOf(combo);
     if(nt>tier){ setTier(nt); fxTier(); sfx.tier(); }
-    score+=10*multiplier();
+    score+=Math.round(10*multiplier());
     updateMultUI(); addGauge(GAIN_KEY[fstage]);
   } else {
-    breakCombo(); fxMiss(span); sfx.miss(); addGauge(-18);
+    if(idx<w.length) missMap[w[idx]]=(missMap[w[idx]]||0)+1;
+    fxMiss(span); sfx.miss();
+    if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-18); }
   }
   updateCombo(true);
 }
@@ -640,28 +742,127 @@ function submitWord(){
   const w=words[wi], el=wordEls[wi];
   if(typed===w){
     okChars+=w.length+1; streak++;
-    const P=(w.length*25+streak*5)*multiplier();
+    const P=Math.round((w.length*25+streak*5)*multiplier());
     fxWord(el,P); sfx.word(streak); addGauge(GAIN_WORD);
   } else {
-    el.classList.add('wrong'); breakCombo(); sfx.miss(); updateCombo(false); addGauge(-10);
+    el.classList.add('wrong'); sfx.miss();
+    if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-10); }
+    updateCombo(false);
   }
   wi++; typed='';
   checkScroll(); placeCaret();
 }
+/* ---------- records ---------- */
+const REC_KEY='typeburst-records', RANK_N=10, HIST_N=20;
+const CATS=[['normal',30],['normal',60],['hard',30],['hard',60]];
+const MODE_NAME={normal:'ノーマル', hard:'ハード'};
+function loadRecords(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(REC_KEY)); }catch(e){}
+  if(!d || !Array.isArray(d.runs)) d={v:1, runs:[]};
+  if(!d.migrated){ // 以前の自己ベスト（ノーマルのみ）を記録に引き継ぐ
+    [30,60].forEach(dur=>{ let b=0; try{ b=Number(localStorage.getItem('typeburst-bestscore-'+dur))||0; }catch(e){}
+      if(b>0) d.runs.unshift({score:b, mode:'normal', dur, date:0}); });
+    d.migrated=true;
+  }
+  return d;
+}
+function saveRecords(d){ try{ localStorage.setItem(REC_KEY, JSON.stringify(d)); }catch(e){} }
+const ranking = (runs,mode,dur) => runs.filter(r=>r.mode===mode && r.dur===dur).sort((a,b)=>b.score-a.score || a.date-b.date).slice(0,RANK_N);
+function pruneRuns(runs){ // 各区分の上位10件と直近20件だけ残す
+  const keep=new Set(runs.slice(-HIST_N));
+  CATS.forEach(([m,d])=>ranking(runs,m,d).forEach(r=>keep.add(r)));
+  return runs.filter(r=>keep.has(r));
+}
+function addRun(run){
+  const d=loadRecords(), prev=ranking(d.runs,run.mode,run.dur)[0];
+  const best=prev?prev.score:0, isBest = run.score>best && run.score>0;
+  d.runs.push(run); d.runs=pruneRuns(d.runs); saveRecords(d);
+  return {isBest, best:Math.max(best,run.score)};
+}
+const fmtDate = t => { if(!t) return '-'; const d=new Date(t), p=n=>String(n).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const dash = v => v==null ? '-' : v;
+
+let recView=null, recCat=0, lastRunDate=0;
+function renderRecords(){
+  const runs=loadRecords().runs, [mode,dur]=CATS[recCat];
+  $('#recTabs').innerHTML=CATS.map(([m,d],i)=>`<button role="tab" data-i="${i}" class="${i===recCat?'on':''}" aria-selected="${i===recCat}">${MODE_NAME[m]} ${d}秒</button>`).join('');
+  const rank=ranking(runs,mode,dur);
+  $('#recRank').innerHTML = rank.length ? '<table><tr><th>#</th><th>スコア</th><th>WPM</th><th>正確率</th><th>日付</th></tr>'+
+    rank.map((r,i)=>`<tr class="${r.date&&r.date===lastRunDate?'now':''}"><td>${i+1}</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td><td>${fmtDate(r.date)}</td></tr>`).join('')+'</table>'
+    : '<p class="empty">まだ記録がありません</p>';
+  const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
+  $('#recHist').innerHTML = hist.length ? '<table><tr><th>日付</th><th>モード</th><th>スコア</th><th>WPM</th><th>正確率</th></tr>'+
+    hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${MODE_NAME[r.mode]} ${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
+    : '<p class="empty">まだ記録がありません</p>';
+}
+const syncScroll = () => document.body.classList.toggle('scrollable', $('#game').hidden); // 結果・記録画面は縦スクロール可
+function openRecords(){
+  if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
+  recView = ended ? '#result' : '#game';
+  recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur));
+  resetKb(); kb.blur();
+  $('#game').hidden=true; $('#result').hidden=true; $('#records').hidden=false;
+  renderRecords(); syncCover(); syncScroll();
+}
+function closeRecords(){
+  if(!recView) return;
+  $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover(); syncScroll();
+}
+$('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
+$('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(recView) closeRecords(); else openRecords(); });
+$('#recBtn2').addEventListener('click',openRecords);
+$('#recClose').addEventListener('click',()=>{ closeRecords(); if(touchOnly && !ended) focusKb(); });
+
+/* 結果の詳細：WPMの推移グラフ（3秒移動平均）とミスの多いキー */
+function renderDetail(){
+  while(secKeys.length<settings.dur) secKeys.push(okKeys);
+  const c=[0,...secKeys], n=settings.dur, W3=3, pts=[];
+  for(let i=1;i<=n;i++){ const a=Math.max(0,i-W3); pts.push((c[i]-c[a])/5*60/(i-a)); }
+  const peak=Math.max(...pts,0), top=Math.max(20,Math.ceil(peak/20)*20);
+  const xy=pts.map((v,i)=>`${(i/(n-1)*100).toFixed(2)},${(100-v/top*100).toFixed(2)}`);
+  const grid=[.25,.5,.75].map(k=>`<line class="gd" x1="0" x2="100" y1="${k*100}" y2="${k*100}"/>`).join('');
+  $('#rChart').innerHTML=`${grid}<polygon class="ar" points="0,100 ${xy.join(' ')} 100,100"/><polyline class="ln" points="${xy.join(' ')}"/>`;
+  $('#rPeak').textContent=`最高 ${Math.round(peak)} WPM`;
+  $('#rDur').textContent=n+'秒';
+  const miss=Object.entries(missMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $('#rMiss').innerHTML = miss.length ? miss.map(([k,v])=>`<span><kbd>${esc(k)}</kbd> ×${v}</span>`).join('') : '<span>ミスなし</span>';
+}
+
+/* 結果のシェア */
+let shareText='';
+function makeShareText(wpm,acc){
+  const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
+  return `typeburst ${score.toLocaleString()}pts [${MODE_NAME[settings.mode]} ${settings.dur}秒] ${wpm}WPM 正確率${acc}% 最大${maxCombo}combo`+
+    (maxStage?` ${STAGE_NAMES[maxStage]}`:'')+url;
+}
+function copyText(t){
+  if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise((ok,ng)=>{ const ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy') ? ok() : ng(); }catch(e){ ng(e); } ta.remove(); });
+}
+function flashLabel(b,text){ const o=b.dataset.label||(b.dataset.label=b.textContent); b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.textContent=o,1500); }
+$('#shCopy').addEventListener('click',e=>{ const b=e.currentTarget; b.blur();
+  copyText(shareText).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした')); });
+$('#shX').addEventListener('click',e=>{ e.currentTarget.blur();
+  window.open('https://x.com/intent/post?text='+encodeURIComponent(shareText),'_blank','noopener'); });
+$('#shNative').hidden = !navigator.share;
+$('#shNative').addEventListener('click',e=>{ e.currentTarget.blur(); navigator.share({text:shareText}).catch(()=>{}); });
+
 function end(){
   clearInterval(timerId); stopFever(); ended=true; syncGauge();
   resetKb(); kb.blur(); syncCover();
   shards.forEach(s=>score+=s.v); shards.length=0; shown=score;
   const wpm=Math.round(okChars/5/(settings.dur/60));
   const acc=allKeys?Math.round(okKeys/allKeys*100):0;
-  const key=`typeburst-bestscore-${settings.dur}`;
-  let best=0; try{ best=Number(localStorage.getItem(key))||0; }catch(e){}
-  const isBest = score>best && score>0;
-  if(isBest){ best=score; try{ localStorage.setItem(key,String(score)); }catch(e){} }
+  lastRunDate=Date.now();
+  const {isBest, best} = addRun({score, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
+    stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate});
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
-  $('#game').hidden=true; $('#result').hidden=false;
+  renderDetail(); shareText=makeShareText(wpm,acc);
+  $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
   rs.textContent='0';
   function countStep(t){
@@ -679,7 +880,7 @@ function end(){
     rs.animate([{transform:'scale(1.15)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.2,1.6,.4,1)'});
     sfx.fanfare(isBest);
     if(isBest){ $('#rNew').hidden=false;
-      setTimeout(()=>{ spark(x,y-40,Math.round(50*m),'#ffffff',8,2); ring(x,y,'#ffffff',Math.max(W,H)*.3,3); },350); }
+      setTimeout(()=>{ spark(x,y-40,Math.round(50*m),hi(),8,2); ring(x,y,hi(),Math.max(W,H)*.3,3); },350); }
   }
   requestAnimationFrame(countStep);
 }
@@ -693,6 +894,7 @@ function handleKey(k){
 /* 物理キーボード（入力欄にフォーカスがないとき） */
 document.addEventListener('keydown',e=>{
   if(e.key==='Tab'){ e.preventDefault(); initAudio(); restart(); return; }
+  if(recView){ if(e.key==='Escape'){ e.preventDefault(); closeRecords(); } return; }
   if(ended){ if(e.key==='Enter'){ e.preventDefault(); restart(); } return; }
   if(e.target===kb) return;               // 入力欄経由の入力は input イベントで処理
   if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing) return;
@@ -704,7 +906,7 @@ const kb=$('#kb'), tapcover=$('#tapcover');
 let prevVal='';
 function resetKb(){ kb.value=''; prevVal=''; }
 kb.addEventListener('input',()=>{
-  if(ended){ resetKb(); return; }
+  if(ended || recView){ resetKb(); return; }
   const v=kb.value.toLowerCase();
   let i=0; while(i<prevVal.length && i<v.length && prevVal[i]===v[i]) i++;
   for(let k=prevVal.length;k>i;k--) handleKey('Backspace');
@@ -733,7 +935,7 @@ if(touchOnly){
   $('#hint').appendChild(rb);
 }
 
-syncOpts(); resize(); restart(); requestAnimationFrame(loop);
+syncOpts(); applyTheme(); resize(); restart(); requestAnimationFrame(loop);
 if(document.fonts) document.fonts.ready.then(()=>{ if(wordEls[0]){ lineH=wordEls[0].offsetHeight; placeCaret(); } });
 </script>
 </body>
