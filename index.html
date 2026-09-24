@@ -25,6 +25,7 @@ body{
   display:grid; place-items:center;
 }
 [hidden]{display:none!important}
+body.scrollable{overflow-x:hidden; overflow-y:auto}
 #glow{position:fixed; inset:0; pointer-events:none;
   background:radial-gradient(60% 45% at 50% 55%, rgba(var(--glow),.12), transparent 70%); opacity:.5}
 #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:5}
@@ -110,6 +111,15 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .stats{display:flex; gap:2.4rem; flex-wrap:wrap}
 .stats span{display:block; color:var(--dim); font-size:14px; margin-bottom:.2rem}
 .stats b{font-size:28px; font-weight:600}
+.detail{display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:1.2rem 2.4rem; font-size:14px; color:var(--dim)}
+.chart-head,.chart-axis{display:flex; justify-content:space-between}
+.chart-axis{font-size:12px}
+#rChart{display:block; width:100%; height:84px; margin:.4rem 0 .2rem; overflow:visible}
+#rChart .ln{fill:none; stroke:var(--accent); stroke-width:2; vector-effect:non-scaling-stroke; stroke-linejoin:round}
+#rChart .ar{fill:var(--accent); opacity:.12}
+#rChart .gd{stroke:var(--bg2); stroke-width:1; vector-effect:non-scaling-stroke}
+#rMiss{display:flex; flex-wrap:wrap; gap:.5rem .9rem; margin-top:.6rem; color:var(--text)}
+#rMiss kbd{font-size:16px; color:var(--err)}
 #rNew{color:var(--accent); font-weight:600; margin:0; animation:blink .8s steps(1) 4}
 .actions{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap}
 #again{color:var(--text); background:var(--bg2); padding:.6rem 1.3rem; border-radius:8px}
@@ -134,7 +144,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
   .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
   body{place-items:start center}
-  #cam{padding-top:1rem}
+  #cam{padding-top:1rem; padding-bottom:1.5rem}
   #stage{gap:1.4rem}
   header{font-size:13px}
   .opts{gap:.6rem; padding:.35rem .6rem}
@@ -143,6 +153,9 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   .big{font-size:64px}
   .stats{gap:1.4rem}
   .stats b{font-size:22px}
+  #result{gap:1.3rem}
+  .detail{grid-template-columns:1fr}
+  #rChart{height:64px}
 }
 </style>
 </head>
@@ -187,6 +200,12 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div><span>最高ステージ</span><b id="rStage">-</b></div>
       <div><span>フィーバー</span><b id="rFever">0秒</b></div>
       <div><span>自己ベスト</span><b id="rBest">0</b></div>
+    </div>
+    <div class="detail">
+      <div><div class="chart-head"><span>WPMの推移</span><span id="rPeak"></span></div>
+        <svg id="rChart" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="chart-axis"><span>0秒</span><span id="rDur">30秒</span></div></div>
+      <div><span>ミスの多いキー</span><div id="rMiss"></div></div>
     </div>
     <p id="rNew" hidden>自己ベスト更新</p>
     <div class="actions"><button id="again">もう一度</button><button id="recBtn2">記録を見る</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
@@ -617,6 +636,7 @@ function fxTier(){ const m=mult(), [x,y,r]=center(wrap);
 /* ---------- game ---------- */
 let words=[], wordEls=[], wi=0, firstVis=0, typed='', started=false, ended=false, t0=0, timerId=0, lastSec=0;
 let combo=0, maxCombo=0, streak=0, okKeys=0, allKeys=0, okChars=0, lineH=0;
+let secKeys=[], missMap={}; // 1秒ごとの正解打鍵の累計、キーごとのミス数
 const esc = c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c);
 const pick = () => WORD_LIST[Math.random()*WORD_LIST.length|0];
 
@@ -663,8 +683,10 @@ function restart(){
   shards.length=0; lines.length=0; chordIdx=0; noteIdx=0;
   words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed='';
   started=false; ended=false; combo=0; maxCombo=0; streak=0; okKeys=0; allKeys=0; okChars=0;
+  secKeys=[]; missMap={};
   setTier(0);
   $('#result').hidden=true; $('#rNew').hidden=true; $('#records').hidden=true; recView=null; $('#game').hidden=false;
+  syncScroll();
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
   addWords(80); updateCombo(false); updateMultUI(); syncGauge();
@@ -680,6 +702,7 @@ function tickTimer(){
   const rem=settings.dur-(performance.now()-t0)/1000;
   if(rem<=0){ timerEl.textContent='0'; end(); return; }
   if(fstage>0) addGauge(-DRAIN[fstage]*.05);
+  while(secKeys.length<Math.floor(settings.dur-rem)) secKeys.push(okKeys);
   const sec=Math.ceil(rem);
   if(sec!==lastSec){
     lastSec=sec; timerEl.textContent=sec;
@@ -705,6 +728,7 @@ function onChar(ch){
     score+=Math.round(10*multiplier());
     updateMultUI(); addGauge(GAIN_KEY[fstage]);
   } else {
+    if(idx<w.length) missMap[w[idx]]=(missMap[w[idx]]||0)+1;
     fxMiss(span); sfx.miss();
     if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-18); }
   }
@@ -768,22 +792,38 @@ function renderRecords(){
     hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${MODE_NAME[r.mode]} ${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
     : '<p class="empty">まだ記録がありません</p>';
 }
+const syncScroll = () => document.body.classList.toggle('scrollable', $('#game').hidden); // 結果・記録画面は縦スクロール可
 function openRecords(){
   if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
   recView = ended ? '#result' : '#game';
   recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur));
   resetKb(); kb.blur();
   $('#game').hidden=true; $('#result').hidden=true; $('#records').hidden=false;
-  renderRecords(); syncCover();
+  renderRecords(); syncCover(); syncScroll();
 }
 function closeRecords(){
   if(!recView) return;
-  $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover();
+  $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover(); syncScroll();
 }
 $('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
 $('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(recView) closeRecords(); else openRecords(); });
 $('#recBtn2').addEventListener('click',openRecords);
 $('#recClose').addEventListener('click',()=>{ closeRecords(); if(touchOnly && !ended) focusKb(); });
+
+/* 結果の詳細：WPMの推移グラフ（3秒移動平均）とミスの多いキー */
+function renderDetail(){
+  while(secKeys.length<settings.dur) secKeys.push(okKeys);
+  const c=[0,...secKeys], n=settings.dur, W3=3, pts=[];
+  for(let i=1;i<=n;i++){ const a=Math.max(0,i-W3); pts.push((c[i]-c[a])/5*60/(i-a)); }
+  const peak=Math.max(...pts,0), top=Math.max(20,Math.ceil(peak/20)*20);
+  const xy=pts.map((v,i)=>`${(i/(n-1)*100).toFixed(2)},${(100-v/top*100).toFixed(2)}`);
+  const grid=[.25,.5,.75].map(k=>`<line class="gd" x1="0" x2="100" y1="${k*100}" y2="${k*100}"/>`).join('');
+  $('#rChart').innerHTML=`${grid}<polygon class="ar" points="0,100 ${xy.join(' ')} 100,100"/><polyline class="ln" points="${xy.join(' ')}"/>`;
+  $('#rPeak').textContent=`最高 ${Math.round(peak)} WPM`;
+  $('#rDur').textContent=n+'秒';
+  const miss=Object.entries(missMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $('#rMiss').innerHTML = miss.length ? miss.map(([k,v])=>`<span><kbd>${esc(k)}</kbd> ×${v}</span>`).join('') : '<span>ミスなし</span>';
+}
 
 function end(){
   clearInterval(timerId); stopFever(); ended=true; syncGauge();
@@ -797,7 +837,8 @@ function end(){
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
-  $('#game').hidden=true; $('#result').hidden=false;
+  renderDetail();
+  $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
   rs.textContent='0';
   function countStep(t){
