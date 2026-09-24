@@ -124,6 +124,13 @@ body.fever4 #glow{animation:hue .9s linear infinite; opacity:1}
 body.fever5:not(.fx0) #words-wrap{animation:rgbjit2 .1s steps(2) infinite}
 body.fever5 #stageTag{font-size:.9em; letter-spacing:.06em}
 @keyframes rgbjit2{50%{filter:drop-shadow(-5px 0 rgba(255,0,100,.6)) drop-shadow(5px 0 rgba(0,220,255,.6))}}
+#cutin{position:fixed; inset:0; pointer-events:none; z-index:7; overflow:hidden; display:grid; place-items:center}
+#cutin .band{position:absolute; left:-15%; width:130%; top:50%; height:clamp(90px,20vh,190px); margin-top:calc(clamp(90px,20vh,190px) / -2);
+  transform:rotate(-7deg); background:linear-gradient(90deg, var(--accent), var(--hi) 50%, var(--accent)); opacity:.9}
+#cutin b{position:relative; font-size:clamp(44px,11vw,150px); font-weight:800; font-style:italic; letter-spacing:-.02em; white-space:nowrap;
+  color:var(--bg); transform:rotate(-7deg)}
+#cutin.soft .band{display:none}
+#cutin.soft b{color:var(--accent)}
 #vignette{position:fixed; inset:0; pointer-events:none; z-index:4; opacity:0;
   background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.55) 100%)}
 @keyframes rgbjit{50%{filter:drop-shadow(-3px 0 rgba(255,0,100,.5)) drop-shadow(3px 0 rgba(0,220,255,.5))}}
@@ -279,6 +286,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 <canvas id="fx"></canvas>
 <div id="flash"></div>
 <div id="vignette"></div>
+<div id="cutin" aria-hidden="true" hidden><i class="band"></i><b></b></div>
 
 <script>
 const WORD_LIST = ("the be of and a to in he have it that for they with as not on she at by this we you do but from or which one would all will there say who make when can more if no man out other so what time up go about than into could state only new year some take come these know see use get like then first any work now may such give over think most even find day also after way many must look before great back through long where much should well people down own just because good each those feel seem how high too place little world very still nation hand old life tell write become here show house both between need mean call develop under last right move thing general school never same another begin while number part turn real leave might want point form off child few small since against ask late home interest large person end open public follow during present without again hold around possible head consider word program problem however lead system set order eye plan run keep face fact group play stand increase early course change help line light sound water music night fire color river city story north south young ready above ever friend table dream quick bright").split(" ");
@@ -598,7 +606,7 @@ function applyTheme(){
   const t=theme();
   ['bg','bg2','dim','text','err'].forEach(k=>root.style.setProperty('--'+k,t[k]));
   t.tiers.forEach((c,i)=>root.style.setProperty('--t'+i,c));
-  root.style.setProperty('--crit',critC());
+  root.style.setProperty('--crit',critC()); root.style.setProperty('--hi',t.hi);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.bg);
   $('#themeSw').style.background=`linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)`;
   themePanel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings.theme));
@@ -830,6 +838,15 @@ function updateMultUI(){
   const up=v>lastMult; lastMult=v; multEl.textContent='×'+v;
   multEl.animate([{transform:`scale(${up?1.8:.7})`},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.2,1.6,.4,1)'});
 }
+/* ヒットストップ：一瞬止めてズームし、解除と同時に弾けさせる。弱・reduced-motionでは無し */
+let hitstopUntil=0;
+function hitstop(k){
+  if(settings.fx===0 || reduced) return false;
+  const D=settings.fx===2?110:80; hitstopUntil=performance.now()+D;
+  const kk=1+(k-1)*Math.min(mult(),1.4);
+  cam.animate([{transform:'scale(1)'},{transform:`scale(${kk})`,offset:D/(D+300)},{transform:'scale(1)'}],{duration:D+300,easing:'ease-out'});
+  return true;
+}
 function camPunch(s){
   if(settings.fx===0 || reduced) return;
   const k=1+(s-1)*Math.min(mult(),1.4);
@@ -847,7 +864,19 @@ function stageUp(){
   if(fstage>=2) spark(x,cy,Math.round(40*m),hi(),12,2);
   flash.animate([{opacity:(.18+fstage*.06)*Math.min(m,1.4)},{opacity:0}],{duration:520,easing:'ease-out'});
   shake=Math.max(shake,(8+fstage*3)*m);
-  camPunch(1.04+fstage*.025);
+  if(!hitstop(1.04+fstage*.025)) camPunch(1.04+fstage*.025);
+  if(fstage===MAX_STAGE) cutIn(STAGE_NAMES[fstage]);
+}
+/* 最上段に上がったときのカットイン。弱・reduced-motionでは文字のフェードだけ */
+function cutIn(text){
+  const el=$('#cutin'), band=el.querySelector('.band'), b=el.querySelector('b'), soft=settings.fx===0||reduced;
+  b.textContent=text; el.classList.toggle('soft',soft); el.hidden=false;
+  const done=()=>{ el.hidden=true; };
+  if(soft){ b.animate([{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.75},{opacity:0}],{duration:900}).onfinish=done; return; }
+  band.animate([{transform:'rotate(-7deg) scaleX(0)',transformOrigin:'right'},{transform:'rotate(-7deg) scaleX(1)',transformOrigin:'right',offset:.14},
+    {transform:'rotate(-7deg) translateX(0)',offset:.8},{transform:'rotate(-7deg) translateX(-120%)'}],{duration:900,easing:'ease-in-out'});
+  b.animate([{transform:'rotate(-7deg) translateX(70vw)'},{transform:'rotate(-7deg) translateX(0)',offset:.18,easing:'linear'},
+    {transform:'rotate(-7deg) translateX(-3vw)',offset:.8},{transform:'rotate(-7deg) translateX(-80vw)'}],{duration:900,easing:'cubic-bezier(.2,.8,.3,1)'}).onfinish=done;
 }
 function stageDown(){
   fstage--; sfx.down();
@@ -956,33 +985,35 @@ function arrive(s){
 function loop(){
   cx.clearRect(0,0,W,H);
   cx.globalCompositeOperation=theme().light?'source-over':'lighter'; cx.lineCap='round';
+  const frozen = performance.now()<hitstopUntil; // ヒットストップ中は動きの計算を止め、描画だけ続ける
   // speed lines
-  if(fstage>0){ const n=[1,2,4][settings.fx]*fstage;
+  if(fstage>0 && !frozen){ const n=[1,2,4][settings.fx]*fstage;
     for(let i=0;i<n && lines.length<600;i++) lines.push({x:W+60,y:Math.random()*H,vx:-(18+Math.random()*26)*(1+fstage*.2),len:40+Math.random()*140}); }
   cx.strokeStyle=accent(); cx.lineWidth=1.5;
-  for(let i=lines.length-1;i>=0;i--){ const l=lines[i]; l.x+=l.vx;
+  for(let i=lines.length-1;i>=0;i--){ const l=lines[i]; if(!frozen) l.x+=l.vx;
     if(l.x+l.len<0){ lines.splice(i,1); continue; }
     cx.globalAlpha=fstage?.22+fstage*.04:.1; cx.beginPath(); cx.moveTo(l.x,l.y); cx.lineTo(l.x+l.len,l.y); cx.stroke(); }
   // sparks
   for(let i=parts.length-1;i>=0;i--){ const p=parts[i];
-    p.vx*=.93; p.vy=p.vy*.93+.12; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
+    if(!frozen){ p.vx*=.93; p.vy=p.vy*.93+.12; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay; }
     if(p.life<=0){ parts.splice(i,1); continue; }
     cx.globalAlpha=p.life; cx.strokeStyle=p.color; cx.lineWidth=p.size*p.life+.4;
     cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(p.x-p.vx*2.4,p.y-p.vy*2.4); cx.stroke();
   }
   for(let i=rings.length-1;i>=0;i--){ const r=rings[i];
-    r.r+=(r.max-r.r)*.14; r.life-=.035;
+    if(!frozen){ r.r+=(r.max-r.r)*.14; r.life-=.035; }
     if(r.life<=0){ rings.splice(i,1); continue; }
     cx.globalAlpha=r.life; cx.strokeStyle=r.color; cx.lineWidth=Math.max(.5,r.w*r.life);
     cx.beginPath(); cx.arc(r.x,r.y,r.r,0,Math.PI*2); cx.stroke();
   }
   // shattered letters: explode, then get sucked into the score
   cx.textAlign='center'; cx.textBaseline='middle';
-  for(let i=shards.length-1;i>=0;i--){ const s=shards[i]; s.t++;
-    if(s.t<16){ s.vx*=.92; s.vy=s.vy*.92+.35; }
-    else { const dx=s.tx-s.x, dy=s.ty-s.y; s.vx=s.vx*.8+dx*.045; s.vy=s.vy*.8+dy*.045;
-      if(dx*dx+dy*dy<400 || s.t>130){ arrive(s); shards.splice(i,1); continue; } }
-    s.x+=s.vx; s.y+=s.vy; s.rot+=s.vr;
+  for(let i=shards.length-1;i>=0;i--){ const s=shards[i];
+    if(!frozen){ s.t++;
+      if(s.t<16){ s.vx*=.92; s.vy=s.vy*.92+.35; }
+      else { const dx=s.tx-s.x, dy=s.ty-s.y; s.vx=s.vx*.8+dx*.045; s.vy=s.vy*.8+dy*.045;
+        if(dx*dx+dy*dy<400 || s.t>130){ arrive(s); shards.splice(i,1); continue; } }
+      s.x+=s.vx; s.y+=s.vy; s.rot+=s.vr; }
     const sc=s.t<16?1+s.t*.02:Math.max(.5,1.3-(s.t-16)*.02);
     cx.save(); cx.translate(s.x,s.y); cx.rotate(s.rot); cx.globalAlpha=1; cx.fillStyle=s.color;
     cx.font=`800 ${s.size*sc}px "JetBrains Mono", monospace`; cx.fillText(s.ch,0,0); cx.restore();
@@ -990,7 +1021,7 @@ function loop(){
   // floating texts / damage numbers
   cx.textBaseline='alphabetic';
   for(let i=texts.length-1;i>=0;i--){ const t=texts[i];
-    t.y-=t.dmg?1.3:.7; t.life-=t.dmg?.03:.016;
+    if(!frozen){ t.y-=t.dmg?1.3:.7; t.life-=t.dmg?.03:.016; }
     if(t.life<=0){ texts.splice(i,1); continue; }
     const sc = t.pop ? 1+1.2*Math.max(0,(t.life-.85)/.15) : 1;
     cx.globalAlpha=Math.min(t.dmg?.85:1,t.life*1.6); cx.fillStyle=t.color;
@@ -999,7 +1030,7 @@ function loop(){
   cx.globalAlpha=1;
   // rolling score
   if(shown!==score){ checkBest(); shown+=(score-shown)*.25; if(Math.abs(score-shown)<1) shown=score; scoreEl.textContent=Math.round(shown).toLocaleString(); }
-  if(shake>.3 && !reduced){
+  if(frozen){} else if(shake>.3 && !reduced){
     stage.style.transform=`translate(${(Math.random()-.5)*shake}px,${(Math.random()-.5)*shake}px)`; shake*=.82;
   } else if(shake){ shake=0; stage.style.transform=''; }
   requestAnimationFrame(loop);
@@ -1025,7 +1056,7 @@ function fxCrit(el){ const m=mult(), [x,y,r]=center(el), g=critC();
   ring(x,y,g,Math.max(W,H)*.35,5*m); ring(x,y,hi(),Math.max(W,H)*.2,2*m);
   spark(x,y,Math.round(70*m),g,10,2.6); spark(x,y,Math.round(25*m),hi(),7,1.8);
   flash.animate([{opacity:.16*Math.min(m,1.4),background:g},{opacity:0,background:g}],{duration:420,easing:'ease-out'});
-  shake=Math.max(shake,8*m); camPunch(1.03);
+  shake=Math.max(shake,8*m); if(!hitstop(1.03)) camPunch(1.03);
 }
 /* プレイ中の自己ベスト：HUDに差を出し、超えた瞬間に一度だけ祝う */
 function syncBestTag(){
