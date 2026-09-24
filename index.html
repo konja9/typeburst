@@ -124,6 +124,9 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .actions{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap}
 #again{color:var(--text); background:var(--bg2); padding:.6rem 1.3rem; border-radius:8px}
 #again:hover{color:var(--accent)}
+.share{display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; font-size:14px}
+.share > span{color:var(--dim); margin-right:.3rem}
+.share button{background:var(--bg2); padding:.35rem .8rem}
 
 #recBtn{color:var(--text)}
 #recBtn:hover{color:var(--accent)}
@@ -209,6 +212,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
     </div>
     <p id="rNew" hidden>自己ベスト更新</p>
     <div class="actions"><button id="again">もう一度</button><button id="recBtn2">記録を見る</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
+    <div class="share"><span>シェア</span><button id="shCopy">コピー</button><button id="shX">Xに投稿</button><button id="shNative" hidden>共有</button></div>
   </section>
 
   <section id="records" hidden>
@@ -825,6 +829,26 @@ function renderDetail(){
   $('#rMiss').innerHTML = miss.length ? miss.map(([k,v])=>`<span><kbd>${esc(k)}</kbd> ×${v}</span>`).join('') : '<span>ミスなし</span>';
 }
 
+/* 結果のシェア */
+let shareText='';
+function makeShareText(wpm,acc){
+  const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
+  return `typeburst ${score.toLocaleString()}pts [${MODE_NAME[settings.mode]} ${settings.dur}秒] ${wpm}WPM 正確率${acc}% 最大${maxCombo}combo`+
+    (maxStage?` ${STAGE_NAMES[maxStage]}`:'')+url;
+}
+function copyText(t){
+  if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise((ok,ng)=>{ const ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy') ? ok() : ng(); }catch(e){ ng(e); } ta.remove(); });
+}
+function flashLabel(b,text){ const o=b.dataset.label||(b.dataset.label=b.textContent); b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.textContent=o,1500); }
+$('#shCopy').addEventListener('click',e=>{ const b=e.currentTarget; b.blur();
+  copyText(shareText).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした')); });
+$('#shX').addEventListener('click',e=>{ e.currentTarget.blur();
+  window.open('https://x.com/intent/post?text='+encodeURIComponent(shareText),'_blank','noopener'); });
+$('#shNative').hidden = !navigator.share;
+$('#shNative').addEventListener('click',e=>{ e.currentTarget.blur(); navigator.share({text:shareText}).catch(()=>{}); });
+
 function end(){
   clearInterval(timerId); stopFever(); ended=true; syncGauge();
   resetKb(); kb.blur(); syncCover();
@@ -837,7 +861,7 @@ function end(){
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
-  renderDetail();
+  renderDetail(); shareText=makeShareText(wpm,acc);
   $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
   rs.textContent='0';
