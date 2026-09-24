@@ -43,6 +43,19 @@ button{font:inherit; color:var(--dim); background:none; border:0; padding:.25rem
 button:hover{color:var(--text)}
 button.on{color:var(--accent)}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button.ic{display:inline-flex; align-items:center; padding:.25rem .35rem}
+.play{display:flex; align-items:center; gap:.2rem; border:1px solid transparent; border-radius:8px; padding:0 .25rem; transition:border-color .2s}
+.play.hard{border-color:var(--err)}
+.play.hardcore{border:2px solid var(--err); animation:hcPulse 1.6s ease-in-out infinite}
+body.fx0 .play.hardcore{animation:none}
+@keyframes hcPulse{50%{box-shadow:0 0 12px color-mix(in srgb, var(--err) 60%, transparent)}}
+.play .sep{width:1px; height:1.1em; background:var(--dim); opacity:.45; margin:0 .15rem}
+.group[data-key="mode"] button{display:inline-flex; align-items:center; gap:1px}
+.group[data-key="mode"] button.on{color:var(--err)}
+.group[data-key="mode"] small{font-size:.8em; margin-left:.25rem}
+#soundBtn .x{display:none}
+#soundBtn.muted .x{display:inline}
+#soundBtn:not(.muted){color:var(--accent)}
 .sw{display:inline-block; width:.85em; height:.85em; border-radius:50%; vertical-align:-.1em; border:2px solid var(--bg2); box-shadow:0 0 0 1px var(--dim)}
 #themeBtn{display:inline-flex; align-items:center; gap:.4rem}
 #themePanel{position:absolute; top:calc(100% + .5rem); right:0; z-index:10; display:grid; grid-template-columns:repeat(5,1fr); gap:.5rem;
@@ -185,10 +198,16 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
     <div class="brand">typeburst</div>
     <nav class="opts" aria-label="設定">
       <div class="group" data-key="text" data-type="str"><button data-v="words">英単語</button><button data-v="sentence">英文</button><button data-v="roma">ローマ字</button></div>
-      <div class="group" data-key="mode" data-type="str"><button data-v="normal">ノーマル</button><button data-v="hard">ハード</button><button data-v="hardcore">ハードコア</button></div>
-      <div class="group" data-key="dur"><button data-v="30">30秒</button><button data-v="60">60秒</button></div>
-      <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
-      <div class="group" data-key="fx"><span>演出</span><button data-v="0">弱</button><button data-v="1">中</button><button data-v="2">強</button></div>
+      <div class="play" id="playBox">
+        <div class="group" data-key="dur"><button data-v="30" title="30秒">30s</button><button data-v="60" title="60秒">60s</button></div>
+        <i class="sep"></i>
+        <div class="group" data-key="mode" data-type="str" data-toggle="normal">
+          <button data-v="hard" title="ハード：ミスで盛り上がりがリセット／スコア×1.5" aria-label="ハード（スコア×1.5）"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×1.5</small></button>
+          <button data-v="hardcore" title="ハードコア：1回ミスで終了／スコア×2" aria-label="ハードコア（スコア×2）"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×2</small></button>
+        </div>
+      </div>
+      <button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <div class="group" data-key="fx"><button data-v="0" class="ic" title="演出：弱" aria-label="演出：弱"></button><button data-v="1" class="ic" title="演出：中" aria-label="演出：中"></button><button data-v="2" class="ic" title="演出：強" aria-label="演出：強"></button></div>
       <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <i class="sw" id="themeSw"></i></button>
       <button id="recBtn">記録</button>
     </nav>
@@ -585,17 +604,40 @@ document.querySelectorAll('.group').forEach(g=>{
   const key=g.dataset.key, type=g.dataset.type;
   g.querySelectorAll('button').forEach(b=>{
     b.addEventListener('click',()=>{
-      const v=b.dataset.v;
-      settings[key] = type==='str' ? v : key==='sound' ? v==='true' : Number(v);
+      let v=b.dataset.v;
+      if(g.dataset.toggle && String(settings[key])===v) v=g.dataset.toggle; // 選択中をもう一度押すと解除（ノーマルへ）
+      settings[key] = type==='str' ? v : Number(v);
       saveSettings(); syncOpts(); b.blur(); initAudio();
+      if(key==='fx') fxPreview(b);
       if(key==='dur'||key==='mode'||key==='text') restart();
     });
   });
 });
+/* 演出の強さのアイコン：光の線の本数と長さで段階を表す */
+document.querySelectorAll('.group[data-key="fx"] button').forEach(b=>{
+  const [n,r1,dot,w]=[[4,5.5,2,1.6],[4,9,2.3,2],[8,10.5,2.6,2]][b.dataset.v];
+  let h=`<circle cx="12" cy="12" r="${dot}" fill="currentColor"/>`;
+  for(let i=0;i<n;i++){ const a=i/n*Math.PI*2-Math.PI/2, c=Math.cos(a), sn=Math.sin(a), r0=dot+1.6;
+    h+=`<line x1="${(12+c*r0).toFixed(1)}" y1="${(12+sn*r0).toFixed(1)}" x2="${(12+c*r1).toFixed(1)}" y2="${(12+sn*r1).toFixed(1)}" stroke="currentColor" stroke-width="${w}" stroke-linecap="round"/>`; }
+  b.innerHTML=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${h}</svg>`;
+});
+/* 演出の強さを選んだとき、その強さのお試し演出を出す */
+function fxPreview(b){
+  if(reduced) return; const m=FXM[settings.fx], [x,y]=center(b);
+  spark(x,y,Math.round(16*m),accent(),2.5+1.5*m,1.6);
+  ring(x,y,accent(),16+26*m,1.5+m);
+  if(settings.fx===2){ spark(x,y,14,hi(),5,1.4); ring(x,y,hi(),70,1.2); }
+  sfx.key();
+}
+const soundBtn=$('#soundBtn');
+soundBtn.addEventListener('click',()=>{ settings.sound=!settings.sound; saveSettings(); syncOpts(); soundBtn.blur(); initAudio(); sfx.key(); });
 function syncOpts(){
   document.querySelectorAll('.group').forEach(g=>{
     g.querySelectorAll('button').forEach(b=>b.classList.toggle('on', String(settings[g.dataset.key])===b.dataset.v));
   });
+  soundBtn.classList.toggle('muted',!settings.sound); soundBtn.setAttribute('aria-pressed',String(settings.sound));
+  soundBtn.title=soundBtn.ariaLabel = settings.sound ? '音：オン' : '音：オフ';
+  $('#playBox').classList.toggle('hard',settings.mode==='hard'); $('#playBox').classList.toggle('hardcore',settings.mode==='hardcore');
   document.body.classList.toggle('fx0', settings.fx===0);
   $('#modeTag').hidden = settings.mode==='normal'; $('#modeTag').textContent = settings.mode;
 }
