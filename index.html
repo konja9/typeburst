@@ -58,6 +58,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 #combo small{font-size:.55em; color:var(--dim); margin-left:.35em}
 #stageTag{display:none; color:var(--accent); font-weight:800; font-size:.7em}
 body.fever #stageTag{display:inline-block; animation:hue 1.2s linear infinite}
+#modeTag{color:var(--err); font-weight:800; font-size:.5em; letter-spacing:.08em; text-transform:uppercase}
 
 #gauge{height:6px; background:var(--bg2); border-radius:3px; overflow:hidden}
 #gauge i{display:block; height:100%; background:var(--accent); transform-origin:left; transform:scaleX(0);
@@ -134,6 +135,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   <header>
     <div class="brand">typeburst</div>
     <nav class="opts" aria-label="設定">
+      <div class="group" data-key="mode" data-type="str"><button data-v="normal">ノーマル</button><button data-v="hard">ハード</button></div>
       <div class="group" data-key="dur"><button data-v="30">30秒</button><button data-v="60">60秒</button></div>
       <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
       <div class="group" data-key="fx"><span>演出</span><button data-v="0">弱</button><button data-v="1">中</button><button data-v="2">強</button></div>
@@ -147,6 +149,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <span><b id="score">0</b><em id="mult">×1</em></span>
       <span id="combo"><b id="comboNum">0</b><small>combo</small></span>
       <span id="stageTag"></span>
+      <span id="modeTag" hidden>hard</span>
     </div>
     <div id="gauge" aria-hidden="true"><i></i></div>
     <div id="words-wrap">
@@ -185,7 +188,7 @@ const wordsEl=$('#words'), wrap=$('#words-wrap'), caret=$('#caret'), timerEl=$('
 
 /* ---------- settings ---------- */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let settings = {dur:30, sound:true, fx: reduced ? 0 : 1, theme:'night'};
+let settings = {mode:'normal', dur:30, sound:true, fx: reduced ? 0 : 1, theme:'night'};
 try{ const s = JSON.parse(localStorage.getItem('typeburst-settings')); if(s) Object.assign(settings, s); }catch(e){}
 function saveSettings(){ try{ localStorage.setItem('typeburst-settings', JSON.stringify(settings)); }catch(e){} }
 const FXM=[.45,1,1.8];
@@ -206,6 +209,8 @@ const THEMES={
           tiers:['#5ab8ff','#4de1d2','#8a8cff','#e36bff','#9dffe0']}
 };
 if(!THEMES[settings.theme]) settings.theme='night';
+const MODE_MULT={normal:1, hard:1.5};
+if(!MODE_MULT[settings.mode]) settings.mode='normal';
 const theme = () => THEMES[settings.theme];
 const hexRgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(',');
 function applyTheme(){
@@ -231,7 +236,7 @@ document.querySelectorAll('.group').forEach(g=>{
       settings[key] = type==='str' ? v : key==='sound' ? v==='true' : Number(v);
       saveSettings(); syncOpts(); b.blur(); initAudio();
       if(key==='theme') applyTheme();
-      if(key==='dur') restart();
+      if(key==='dur'||key==='mode') restart();
     });
   });
 });
@@ -240,6 +245,7 @@ function syncOpts(){
     g.querySelectorAll('button').forEach(b=>b.classList.toggle('on', String(settings[g.dataset.key])===b.dataset.v));
   });
   document.body.classList.toggle('fx0', settings.fx===0);
+  $('#modeTag').hidden = settings.mode!=='hard';
 }
 
 /* ---------- tiers (combo) ---------- */
@@ -375,7 +381,7 @@ const GAIN_KEY=[1.6,1.5,1.4,1.3], GAIN_WORD=4, DRAIN=[0,3,4,5];
 let gauge=0, fstage=0, maxStage=0, feverT0=0, feverTime=0, schedId=0, step=0, nextT=0, lastMult=1;
 const clock = () => ac ? ac.currentTime : performance.now()/1000;
 const bpm = () => STAGE_BPM[fstage]+Math.min(12,combo/20);
-const multiplier = () => TIER_MULT[tier]*STAGE_MULT[fstage];
+const multiplier = () => TIER_MULT[tier]*STAGE_MULT[fstage]*MODE_MULT[settings.mode];
 
 function addGauge(d){
   if(ended) return;
@@ -429,6 +435,17 @@ function stageDown(){
 function stopFever(){
   if(fstage>0) feverTime+=(performance.now()-feverT0)/1000;
   fstage=0; clearInterval(schedId); riserStop(); setStageClass();
+}
+/* ハードモード：ミス1回でコンボ・フィーバー・ゲージ・コード進行をすべて最初に戻す */
+function hardReset(){
+  const lost = combo>0 || gauge>0 || fstage>0;
+  if(fstage>0) sfx.down();
+  stopFever(); gauge=0; chordIdx=0; noteIdx=0; step=0;
+  breakCombo(); syncGauge();
+  if(!lost) return;
+  const m=mult(), [x,,r]=center(wrap);
+  floatText(x,r.top-10,'reset',errC(),26,true);
+  shake=Math.max(shake,9*m); camPunch(.96);
 }
 function schedule(){ while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=60/bpm()/4; step++; } }
 function playStep(s,t){
@@ -658,10 +675,11 @@ function onChar(ch){
     noteIdx++; if(!fstage && noteIdx%16===0) chordIdx++;
     const nt=tierOf(combo);
     if(nt>tier){ setTier(nt); fxTier(); sfx.tier(); }
-    score+=10*multiplier();
+    score+=Math.round(10*multiplier());
     updateMultUI(); addGauge(GAIN_KEY[fstage]);
   } else {
-    breakCombo(); fxMiss(span); sfx.miss(); addGauge(-18);
+    fxMiss(span); sfx.miss();
+    if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-18); }
   }
   updateCombo(true);
 }
@@ -669,10 +687,12 @@ function submitWord(){
   const w=words[wi], el=wordEls[wi];
   if(typed===w){
     okChars+=w.length+1; streak++;
-    const P=(w.length*25+streak*5)*multiplier();
+    const P=Math.round((w.length*25+streak*5)*multiplier());
     fxWord(el,P); sfx.word(streak); addGauge(GAIN_WORD);
   } else {
-    el.classList.add('wrong'); breakCombo(); sfx.miss(); updateCombo(false); addGauge(-10);
+    el.classList.add('wrong'); sfx.miss();
+    if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-10); }
+    updateCombo(false);
   }
   wi++; typed='';
   checkScroll(); placeCaret();
@@ -683,7 +703,7 @@ function end(){
   shards.forEach(s=>score+=s.v); shards.length=0; shown=score;
   const wpm=Math.round(okChars/5/(settings.dur/60));
   const acc=allKeys?Math.round(okKeys/allKeys*100):0;
-  const key=`typeburst-bestscore-${settings.dur}`;
+  const key=`typeburst-bestscore-${settings.dur}`+(settings.mode==='hard'?'-hard':'');
   let best=0; try{ best=Number(localStorage.getItem(key))||0; }catch(e){}
   const isBest = score>best && score>0;
   if(isBest){ best=score; try{ localStorage.setItem(key,String(score)); }catch(e){} }
