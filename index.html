@@ -214,6 +214,8 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .seg button.on{background:var(--bg); color:var(--accent)}
 .best-card{position:relative; background:var(--bg2); border-radius:14px; padding:1.1rem 1.3rem; border:1px solid color-mix(in srgb, var(--accent) 35%, transparent)}
 .bc-label{color:var(--dim); font-size:13px}
+.bc-share{position:absolute; top:.8rem; right:.9rem; display:flex; gap:.35rem; font-size:13px}
+.bc-share button{background:var(--bg); padding:.3rem .7rem}
 .bc-label b{color:var(--crit); font-weight:800; margin-right:.5rem}
 .bc-score{font-size:clamp(40px,7vw,64px); font-weight:800; color:var(--accent); line-height:1.1; letter-spacing:-.03em; font-variant-numeric:tabular-nums; margin:.2rem 0 .5rem}
 .bc-score small{font-size:.3em; color:var(--dim); font-weight:400; margin-left:.4em; letter-spacing:0}
@@ -246,6 +248,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   .rrow{grid-template-columns:1.6em 5.4em minmax(30px,1fr) 3.8em 3.2em; gap:.45rem; font-size:13px}
   .hrow2{grid-template-columns:auto auto 1fr 3.8em; gap:.45rem; font-size:13px}
   .best-card{padding:.9rem 1rem}
+  .bc-share{position:static; margin-bottom:.6rem}
   body{place-items:start center}
   #cam{padding-top:1rem; padding-bottom:1.5rem}
   #stage{gap:1.4rem}
@@ -1445,7 +1448,9 @@ function renderRecords(){
   if(top){
     const st=[[top.wpm,'WPM'],[top.acc!=null?top.acc+'%':null,'正確率'],[top.combo,'最大コンボ'],[top.stage?STAGE_NAMES[top.stage]:null,'最高ステージ']]
       .filter(([v])=>v!=null).map(([v,l])=>`<span><b>${v}</b>${l}</span>`).join('');
-    $('#bestCard').innerHTML=`<div class="bc-label"><b>自己ベスト</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
+    cardShareText=runShareText(top,'自己ベスト');
+    $('#bestCard').innerHTML=`<div class="bc-share"><button data-sh="copy">コピー</button><button data-sh="x">Xに投稿</button>${navigator.share?'<button data-sh="native">共有</button>':''}</div>
+      <div class="bc-label"><b>自己ベスト</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
       <div class="bc-score">${top.score.toLocaleString()}<small>pts</small></div>
       <div class="bc-stats">${st}<span>${fmtDate(top.date)}</span></div>`;
   } else $('#bestCard').innerHTML=`<div class="bc-empty">まだ記録がありません<small>${catName(recText,recMode,recDur)} で遊んでみよう</small></div>`;
@@ -1534,10 +1539,13 @@ function renderDetail(T){
 
 /* 結果のシェア */
 let shareText='';
-function makeShareText(wpm,acc){
+/* 記録1件からシェア用の文を作る。古い記録でない項目は省く */
+function runShareText(r,label){
   const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
-  return `typeburst ${score.toLocaleString()}pts [${TEXT_NAME[settings.text]} ${MODE_NAME[settings.mode]} ${settings.dur}秒] ${wpm}WPM 正確率${acc}% 最大${maxCombo}combo`+
-    (maxStage?` ${STAGE_NAMES[maxStage]}`:'')+url;
+  const p=[`typeburst ${label} ${r.score.toLocaleString()}pts [${TEXT_NAME[textOf(r)]} ${MODE_NAME[r.mode]} ${r.dur}秒]`];
+  if(r.wpm!=null) p.push(r.wpm+'WPM'); if(r.acc!=null) p.push(`正確率${r.acc}%`);
+  if(r.combo!=null) p.push(`最大${r.combo}combo`); if(r.stage) p.push(STAGE_NAMES[r.stage]);
+  return p.join(' ')+url;
 }
 function copyText(t){
   if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
@@ -1545,12 +1553,19 @@ function copyText(t){
     document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy') ? ok() : ng(); }catch(e){ ng(e); } ta.remove(); });
 }
 function flashLabel(b,text){ const o=b.dataset.label||(b.dataset.label=b.textContent); b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.textContent=o,1500); }
-$('#shCopy').addEventListener('click',e=>{ const b=e.currentTarget; b.blur();
-  copyText(shareText).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした')); });
-$('#shX').addEventListener('click',e=>{ e.currentTarget.blur();
-  window.open('https://x.com/intent/post?text='+encodeURIComponent(shareText),'_blank','noopener'); });
+/* シェアの操作（結果画面と自己ベストのカードで共用）。kind: copy / x / native */
+function doShare(kind,text,b){
+  b.blur();
+  if(kind==='copy') copyText(text).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした'));
+  else if(kind==='x') window.open('https://x.com/intent/post?text='+encodeURIComponent(text),'_blank','noopener');
+  else navigator.share({text}).catch(()=>{});
+}
+$('#shCopy').addEventListener('click',e=>doShare('copy',shareText,e.currentTarget));
+$('#shX').addEventListener('click',e=>doShare('x',shareText,e.currentTarget));
 $('#shNative').hidden = !navigator.share;
-$('#shNative').addEventListener('click',e=>{ e.currentTarget.blur(); navigator.share({text:shareText}).catch(()=>{}); });
+$('#shNative').addEventListener('click',e=>doShare('native',shareText,e.currentTarget));
+let cardShareText='';
+$('#bestCard').addEventListener('click',e=>{ const b=e.target.closest('button[data-sh]'); if(b) doShare(b.dataset.sh,cardShareText,b); });
 
 function end(failedAt){ // failedAt: ハードコアでミスした時点の経過秒数
   const T=failedAt||settings.dur;
@@ -1560,12 +1575,13 @@ function end(failedAt){ // failedAt: ハードコアでミスした時点の経�
   const wpm=Math.round(okChars/5/(T/60));
   const acc=allKeys?Math.round(okKeys/allKeys*100):0;
   lastRunDate=Date.now();
-  const {isBest, best} = addRun({score, text:settings.text, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
-    stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate});
+  const run={score, text:settings.text, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
+    stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate};
+  const {isBest, best} = addRun(run);
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rCrit').textContent=critN; $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
-  renderDetail(T); shareText=makeShareText(wpm,acc);
+  renderDetail(T); shareText=runShareText(run,'今回の結果');
   $('#rFail').hidden=!failedAt; if(failedAt) $('#rFail').textContent=`ミスで終了（${failedAt.toFixed(1)}秒）`;
   $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
