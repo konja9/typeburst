@@ -189,7 +189,19 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 
 #recBtn{color:var(--text)}
 #recBtn:hover{color:var(--accent)}
-#records{display:flex; flex-direction:column; gap:1.2rem}
+#records,#help{display:flex; flex-direction:column; gap:1.2rem}
+#helpBtn{width:1.6em; height:1.6em; padding:0; border:1.5px solid currentColor; border-radius:50%; font-weight:800; line-height:1; display:inline-grid; place-items:center}
+.help-body{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.4rem 2.4rem; font-size:14px; line-height:1.6}
+.help-body section{min-width:0}
+.help-body h3{margin:0 0 .5rem; font-size:15px; color:var(--accent)}
+.help-body p{margin:.3rem 0; color:var(--dim)}
+.help-body p b{color:var(--text); font-weight:600}
+.hrow{display:grid; grid-template-columns:auto auto 1fr; gap:.2rem .8rem; align-items:baseline; padding:.28rem 0; border-bottom:1px solid var(--bg2)}
+.hrow .n{color:var(--text); font-weight:600; white-space:nowrap}
+.hrow .x{color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap}
+.hrow .d{color:var(--dim)}
+.hrow.danger .n,.hrow.danger .x{color:var(--err)}
+.hrow i.sw{margin-right:.4rem}
 #recTabs{margin-top:-.7rem}
 .rec-head{display:flex; justify-content:space-between; align-items:center; gap:1rem}
 .rec-head h2{margin:0; font-size:22px; font-weight:800}
@@ -205,6 +217,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .rec-body .tw{overflow-x:auto}
 .rec-body .empty{color:var(--dim); font-size:14px; margin:0}
 @media (max-width:700px){
+  .help-body{grid-template-columns:1fr}
   .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
   .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
   .rec-body .acc{display:none}
@@ -244,6 +257,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div class="group meter" data-key="fx"><span>演出</span><button data-v="0" title="演出：弱" aria-label="演出：弱"><i class="bar"></i></button><button data-v="1" title="演出：中" aria-label="演出：中"><i class="bar"></i></button><button data-v="2" title="演出：強" aria-label="演出：強"><i class="bar"></i></button></div>
       <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <i class="sw" id="themeSw"></i></button>
       <button id="recBtn">記録</button>
+      <button id="helpBtn" title="遊び方" aria-label="遊び方">?</button>
     </nav>
     <div id="themePanel" role="dialog" aria-label="テーマ" hidden></div>
     <div id="ruleCard" role="dialog" aria-live="polite" hidden><b></b><p></p><button id="ruleOk">OK</button></div>
@@ -289,6 +303,11 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
     <p id="rFail" hidden></p>
     <div class="actions"><button id="again">もう一度</button><button id="recBtn2">記録を見る</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
     <div class="share"><span>シェア</span><button id="shCopy">コピー</button><button id="shX">Xに投稿</button><button id="shNative" hidden>共有</button></div>
+  </section>
+
+  <section id="help" hidden>
+    <div class="rec-head"><h2>遊び方</h2><button id="helpClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="help-body" id="helpBody"></div>
   </section>
 
   <section id="records" hidden>
@@ -1266,7 +1285,7 @@ function restart(){
   secKeys=[]; missMap={}; crit=[]; critN=0;
   runBest=bestFor(settings.text,settings.mode,settings.dur); bestHit=false; syncBestTag();
   setTier(0);
-  $('#result').hidden=true; $('#rNew').hidden=true; $('#rFail').hidden=true; $('#records').hidden=true; recView=null; $('#game').hidden=false;
+  $('#result').hidden=true; $('#rNew').hidden=true; $('#rFail').hidden=true; $('#records').hidden=true; $('#help').hidden=true; view=null; $('#game').hidden=false;
   syncScroll();
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
@@ -1372,7 +1391,7 @@ const fmtDate = t => { if(!t) return '-'; const d=new Date(t), p=n=>String(n).pa
   return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const dash = v => v==null ? '-' : v;
 
-let recView=null, recCat=0, recText='words', lastRunDate=0;
+let recCat=0, recText='words', lastRunDate=0;
 function renderRecords(){
   const runs=loadRecords().runs, [mode,dur]=CATS[recCat];
   $('#recTextTabs').innerHTML=TEXTS.map(t=>`<button role="tab" data-t="${t}" class="${t===recText?'on':''}" aria-selected="${t===recText}">${TEXT_NAME[t]}</button>`).join('');
@@ -1387,23 +1406,56 @@ function renderRecords(){
     : '<p class="empty">まだ記録がありません</p>';
 }
 const syncScroll = () => document.body.classList.toggle('scrollable', $('#game').hidden); // 結果・記録画面は縦スクロール可
-function openRecords(){
-  if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
-  recView = ended ? '#result' : '#game';
-  recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur)); recText=settings.text;
-  resetKb(); kb.blur();
-  $('#game').hidden=true; $('#result').hidden=true; $('#records').hidden=false;
-  renderRecords(); syncCover(); syncScroll();
+/* 遊び方：数値はゲームの定数から作る */
+function renderHelp(){
+  const row=(n,x,d,cls='')=>`<div class="hrow ${cls}"><span class="n">${n}</span><span class="x">${x}</span><span class="d">${d}</span></div>`;
+  const tiers=theme().tiers;
+  $('#helpBody').innerHTML=[
+    `<section><h3>難易度</h3>${['normal','hard','hardcore'].map(m=>row(`${MODE_ICON[m]} ${MODE_NAME[m]}`,'×'+MODE_MULT[m],MODE_RULE[m],m==='normal'?'':'danger')).join('')}
+      <p>ヘッダーの <b>☠</b>（ハード）と <b>☠☠</b>（ハードコア）で切り替え。選んでいるものをもう一度押すとノーマル。</p></section>`,
+    `<section><h3>コンボ</h3>${TIERS.map((t,i)=>row(`<i class="sw" style="background:${tiers[i]}"></i>${t.at}〜`,'×'+TIER_MULT[i],['','ベースが入る','和音が入る','',''][i])).join('')}
+      <p>正しく打つたびにコンボが増え、色と倍率が上がる。ミスすると0に戻る。</p></section>`,
+    `<section><h3>フィーバー</h3>${STAGE_NAMES.slice(1).map((n,i)=>row(n,'×'+STAGE_MULT[i+1],'BPM '+STAGE_BPM[i+1])).join('')}
+      <p>正しく打つとゲージが増え、<b>満タンで1つ上の段階</b>へ。フィーバー中はゲージが減り続け、<b>0で1段階下がる</b>。上の段階ほど貯まりにくく、早く減る。</p></section>`,
+    `<section><h3>スコア</h3>
+      <p><b>1打</b>：10点 × 倍率</p>
+      <p><b>単語を打ち切る</b>：（文字数×25 ＋ 連続正解×5）× 倍率</p>
+      <p><b>倍率</b>：コンボ × フィーバー × 難易度</p>
+      <p><b style="color:var(--crit)">CRITICAL</b>：金色の単語を打ち切ると ×3。途中でミスすると金色は消える。</p>
+      <p>プレイ中は自己ベストまでの差が出て、超えると NEW RECORD。</p></section>`,
+    `<section><h3>出題モード</h3>
+      <p><b>英単語</b>：ランダムな英単語。スペースで次へ。</p>
+      <p><b>英文</b>：短い英文を単語ごとに打つ。スペースで次へ。</p>
+      <p><b>ローマ字</b>：日本語の文を文節ごとに打つ。shi/si、tsu/tu、ん の nn など好きな綴りでよい。打ち切ると自動で次へ（スペース不要）。</p></section>`,
+    `<section><h3>操作</h3>
+      <p><kbd>Tab</kbd> やり直し　<kbd>Enter</kbd> 結果画面からもう一度　<kbd>Esc</kbd> 記録・遊び方を閉じる</p>
+      <p>スマホは画面をタップしてキーボードを出す。ローマ字モードは英字キーボードで打つ。</p></section>`
+  ].join('');
 }
-function closeRecords(){
-  if(!recView) return;
-  $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover(); syncScroll();
+/* 記録・遊び方などの画面の開閉。閉じると、開く前の画面（ゲームか結果）に戻る */
+let view=null, viewFrom=null;
+function openView(id,render){
+  if(view) closeView();
+  if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
+  viewFrom = ended ? '#result' : '#game'; view=id;
+  resetKb(); kb.blur();
+  $('#game').hidden=true; $('#result').hidden=true; $(id).hidden=false;
+  render(); syncCover(); syncScroll();
+}
+function closeView(){
+  if(!view) return;
+  $(view).hidden=true; $(viewFrom).hidden=false; view=null; syncCover(); syncScroll();
+}
+function openRecords(){
+  openView('#records',()=>{ recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur)); recText=settings.text; renderRecords(); });
 }
 $('#recTextTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recText=b.dataset.t; renderRecords(); });
 $('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
-$('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(recView) closeRecords(); else openRecords(); });
+$('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(view==='#records') closeView(); else openRecords(); });
 $('#recBtn2').addEventListener('click',openRecords);
-$('#recClose').addEventListener('click',()=>{ closeRecords(); if(touchOnly && !ended) focusKb(); });
+$('#recClose').addEventListener('click',()=>{ closeView(); if(touchOnly && !ended) focusKb(); });
+$('#helpBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(view==='#help') closeView(); else openView('#help',renderHelp); });
+$('#helpClose').addEventListener('click',()=>{ closeView(); if(touchOnly && !ended) focusKb(); });
 
 /* 結果の詳細：WPMの推移グラフ（3秒移動平均）とミスの多いキー */
 function renderDetail(T){
@@ -1490,7 +1542,7 @@ document.addEventListener('keydown',e=>{
   if(!$('#ruleCard').hidden){ e.preventDefault(); hideRuleCard(); return; } // 説明カード表示中の打鍵は閉じるだけ
   if(!themePanel.hidden){ e.preventDefault(); setThemePanel(false); return; } // パネル表示中の打鍵は閉じるだけ
   if(e.key==='Tab'){ e.preventDefault(); initAudio(); restart(); return; }
-  if(recView){ if(e.key==='Escape'){ e.preventDefault(); closeRecords(); } return; }
+  if(view){ if(e.key==='Escape'){ e.preventDefault(); closeView(); } return; }
   if(ended){ if(e.key==='Enter'){ e.preventDefault(); restart(); } return; }
   if(e.target===kb) return;               // 入力欄経由の入力は input イベントで処理
   if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing) return;
@@ -1502,7 +1554,7 @@ const kb=$('#kb'), tapcover=$('#tapcover');
 let prevVal='';
 function resetKb(){ kb.value=''; prevVal=''; }
 kb.addEventListener('input',()=>{
-  if(ended || recView){ resetKb(); return; }
+  if(ended || view){ resetKb(); return; }
   const v=kb.value.toLowerCase();
   let i=0; while(i<prevVal.length && i<v.length && prevVal[i]===v[i]) i++;
   for(let k=prevVal.length;k>i;k--) handleKey('Backspace');
