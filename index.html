@@ -75,6 +75,10 @@ body.fx0 .play.hardcore{animation:none}
 #combo.live{opacity:1}
 #combo b{display:inline-block; font-weight:800}
 #combo small{font-size:.55em; color:var(--dim); margin-left:.35em}
+.word.crit span{color:color-mix(in srgb, var(--crit) 70%, transparent); text-shadow:0 0 10px color-mix(in srgb, var(--crit) 55%, transparent)}
+.word.crit span.ok{color:var(--crit)}
+#bestTag{color:var(--dim); font-size:.5em}
+#bestTag.hit{color:var(--accent); font-weight:800}
 #stageTag{display:none; color:var(--accent); font-weight:800; font-size:.7em}
 body.fever #stageTag{display:inline-block; animation:hue 1.2s linear infinite}
 #modeTag{color:var(--err); font-weight:800; font-size:.5em; letter-spacing:.08em; text-transform:uppercase}
@@ -226,6 +230,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <span><b id="score">0</b><em id="mult">×1</em></span>
       <span id="combo"><b id="comboNum">0</b><small>combo</small></span>
       <span id="stageTag"></span>
+      <span id="bestTag" hidden></span>
       <span id="modeTag" hidden>hard</span>
     </div>
     <div id="gauge" aria-hidden="true"><i></i></div>
@@ -246,6 +251,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div><span>最大コンボ</span><b id="rCombo">0</b></div>
       <div><span>最高ステージ</span><b id="rStage">-</b></div>
       <div><span>フィーバー</span><b id="rFever">0秒</b></div>
+      <div><span>CRITICAL</span><b id="rCrit">0</b></div>
       <div><span>自己ベスト</span><b id="rBest">0</b></div>
     </div>
     <div class="detail">
@@ -592,6 +598,7 @@ function applyTheme(){
   const t=theme();
   ['bg','bg2','dim','text','err'].forEach(k=>root.style.setProperty('--'+k,t[k]));
   t.tiers.forEach((c,i)=>root.style.setProperty('--t'+i,c));
+  root.style.setProperty('--crit',critC());
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.bg);
   $('#themeSw').style.background=`linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)`;
   themePanel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings.theme));
@@ -655,7 +662,7 @@ const TIER_MULT=[1,2,3,4,5];
 let tier=0;
 const tierOf = c => { let t=0; TIERS.forEach((x,i)=>{ if(c>=x.at) t=i; }); return t; };
 const accent = () => theme().tiers[tier];
-const hi = () => theme().hi, errC = () => theme().err;
+const hi = () => theme().hi, errC = () => theme().err, critC = () => theme().light ? '#c98a00' : '#ffc857';
 function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.style.setProperty('--glow',hexRgb(accent())); }
 
 /* ---------- audio core ---------- */
@@ -746,6 +753,16 @@ const sfx = {
   },
   tick(){ if(!canPlay()) return; tone(1100,'square',ac.currentTime,.03,.04); },
   count(e){ if(!canPlay()) return; tone(500+e*900,'square',ac.currentTime,.02,.025); },
+  crit(){ if(!canPlay()) return; const t=ac.currentTime; // 明るい上昇アルペジオとベル
+    [1046.5,1318.5,1568,2093].forEach((f,i)=>{ tone(f,'triangle',t+i*.045,.16,.12); tone(f*2,'sine',t+i*.045,.1,.03); });
+    tone(2637,'sine',t+.2,1.1,.07); tone(3951,'sine',t+.2,.8,.03);
+    noise(t,.5,.08,'highpass',5000,.6,11000);
+  },
+  record(){ if(!canPlay()) return; const t=ac.currentTime, lp=lowpass(3500); // 自己ベスト追い越しの短いファンファーレ
+    [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,'triangle',t+i*.06,.2,.13));
+    [523.25,783.99,1046.5].forEach(f=>tone(f,'sawtooth',t+.26,.6,.045,lp));
+    noise(t+.24,.5,.09,'highpass',1500,.7,9000);
+  },
   fanfare(best){ if(!canPlay()) return; const t=ac.currentTime, lp=lowpass(3000);
     [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,'triangle',t+i*.08,.25,.15));
     [523.25,659.25,783.99,1046.5].forEach(f=>{ tone(f,'triangle',t+.36,1.1,.07); tone(f/2,'sawtooth',t+.36,1.1,.04,lp); });
@@ -981,7 +998,7 @@ function loop(){
   }
   cx.globalAlpha=1;
   // rolling score
-  if(shown!==score){ shown+=(score-shown)*.25; if(Math.abs(score-shown)<1) shown=score; scoreEl.textContent=Math.round(shown).toLocaleString(); }
+  if(shown!==score){ checkBest(); shown+=(score-shown)*.25; if(Math.abs(score-shown)<1) shown=score; scoreEl.textContent=Math.round(shown).toLocaleString(); }
   if(shake>.3 && !reduced){
     stage.style.transform=`translate(${(Math.random()-.5)*shake}px,${(Math.random()-.5)*shake}px)`; shake*=.82;
   } else if(shake){ shake=0; stage.style.transform=''; }
@@ -993,7 +1010,7 @@ function fxKey(span){ const m=mult(), [x,y]=center(span);
   spark(x,y,Math.round((3+tier*2.5+fstage*2)*m),accent(),2+tier*.6,1.6);
   span.classList.add('pop');
 }
-function fxWord(el,P){ const m=mult(), [x,y,r]=center(el), c=accent();
+function fxWord(el,P,c=accent()){ const m=mult(), [x,y,r]=center(el);
   spark(x,y,Math.round((14+tier*8+fstage*8)*m),c,4+tier,2.2);
   ring(x,y,c,(40+tier*16)*m+r.width*.4,3);
   if(tier>=2||fstage>=2) ring(x,y,hi(),(70+tier*20)*m,1.5);
@@ -1002,6 +1019,28 @@ function fxWord(el,P){ const m=mult(), [x,y,r]=center(el), c=accent();
   shatter(el,P,c);
   glow.animate([{opacity:.5+.4*Math.min(m,1.2)},{opacity:.5}],{duration:350,easing:'ease-out'});
   if(fstage>=2) camPunch(1.012);
+}
+function fxCrit(el){ const m=mult(), [x,y,r]=center(el), g=critC();
+  floatText(x,r.top-30,'CRITICAL',g,30+10*Math.min(m,1.5),true);
+  ring(x,y,g,Math.max(W,H)*.35,5*m); ring(x,y,hi(),Math.max(W,H)*.2,2*m);
+  spark(x,y,Math.round(70*m),g,10,2.6); spark(x,y,Math.round(25*m),hi(),7,1.8);
+  flash.animate([{opacity:.16*Math.min(m,1.4),background:g},{opacity:0,background:g}],{duration:420,easing:'ease-out'});
+  shake=Math.max(shake,8*m); camPunch(1.03);
+}
+/* プレイ中の自己ベスト：HUDに差を出し、超えた瞬間に一度だけ祝う */
+function syncBestTag(){
+  const el=$('#bestTag'); el.hidden=!runBest;
+  el.classList.toggle('hit',bestHit);
+  el.textContent = bestHit ? 'NEW RECORD' : `BEST まで ${Math.max(0,runBest-score).toLocaleString()}`;
+}
+function checkBest(){
+  if(!runBest || bestHit || ended) return;
+  if(score>runBest){ bestHit=true; syncBestTag();
+    const m=mult(), [x,y]=center(scoreEl);
+    floatText(W/2,y+70,'NEW RECORD',hi(),30+12*Math.min(m,1.5),true);
+    ring(x,y,hi(),Math.max(W,H)*.45,4*m); spark(x,y,Math.round(60*m),hi(),9,2.4); spark(x,y,Math.round(40*m),accent(),7,2);
+    shake=Math.max(shake,7*m); camPunch(1.035); sfx.record();
+  } else syncBestTag();
 }
 function fxMiss(span){ const m=mult(), [x,y]=center(span);
   shake=Math.max(shake,5*m);
@@ -1084,6 +1123,8 @@ let secKeys=[], missMap={}; // 1秒ごとの正解打鍵の累計、キーごと
 const esc = c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c);
 const pick = () => WORD_LIST[Math.random()*WORD_LIST.length|0];
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const CRIT_P=.04; // CRITICAL（金色の単語）の出現率
+let crit=[], critN=0, runBest=0, bestHit=false;
 let sentQueue=[], jaQueue=[], meta=[]; // meta[i]: ローマ字モードの判定用データ {u,si,ci}
 /* 出題モードごとに次の単語を返す（英文は文をシャッフルして順に流す） */
 function nextWord(){
@@ -1112,8 +1153,8 @@ function addWords(n){
   for(let i=0;i<n;i++){
     let w, m=null;
     if(isRoma()) ({w,m}=nextRoma()); else w=nextWord();
-    words.push(w); meta.push(m);
-    const el=document.createElement('div'); el.className='word';
+    words.push(w); meta.push(m); crit.push(words.length>3 && Math.random()<CRIT_P);
+    const el=document.createElement('div'); el.className=crit[words.length-1]?'word crit':'word';
     wordEls.push(el); wordsEl.appendChild(el); renderWord(words.length-1,'');
   }
 }
@@ -1154,7 +1195,8 @@ function restart(){
   shards.length=0; lines.length=0; chordIdx=0; noteIdx=0;
   words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed=''; sentQueue=[]; jaQueue=[]; meta=[];
   started=false; ended=false; combo=0; maxCombo=0; streak=0; okKeys=0; allKeys=0; okChars=0;
-  secKeys=[]; missMap={};
+  secKeys=[]; missMap={}; crit=[]; critN=0;
+  runBest=bestFor(settings.text,settings.mode,settings.dur); bestHit=false; syncBestTag();
   setTier(0);
   $('#result').hidden=true; $('#rNew').hidden=true; $('#rFail').hidden=true; $('#records').hidden=true; recView=null; $('#game').hidden=false;
   syncScroll();
@@ -1207,6 +1249,7 @@ function onChar(ch){
     if(isRoma() && typed===words[wi]){ updateCombo(true); submitWord(); return; } // 文節を打ち切ったら自動で確定
   } else {
     if(idx<w.length) missMap[w[idx]]=(missMap[w[idx]]||0)+1;
+    if(crit[wi]){ crit[wi]=false; wordEls[wi].classList.remove('crit'); } // ミスすると金色は消える
     fxMiss(span); sfx.miss();
     if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-18); }
   }
@@ -1216,8 +1259,10 @@ function submitWord(){
   const w=words[wi], el=wordEls[wi];
   if(typed===w){
     okChars+=w.length+(isRoma()?0:1); streak++;
-    const P=Math.round((w.length*25+streak*5)*multiplier());
-    fxWord(el,P); sfx.word(streak); addGauge(GAIN_WORD);
+    let P=Math.round((w.length*25+streak*5)*multiplier());
+    if(crit[wi]){ P*=3; critN++; fxWord(el,P,critC()); fxCrit(el); sfx.crit(); }
+    else { fxWord(el,P); sfx.word(streak); }
+    addGauge(GAIN_WORD);
   } else {
     el.classList.add('wrong'); sfx.miss();
     if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-10); }
@@ -1248,6 +1293,7 @@ function pruneRuns(runs){ // 各区分の上位10件と直近20件だけ残す
   TEXTS.forEach(t=>CATS.forEach(([m,d])=>ranking(runs,t,m,d).forEach(r=>keep.add(r))));
   return runs.filter(r=>keep.has(r));
 }
+const bestFor = (text,mode,dur) => (ranking(loadRecords().runs,text,mode,dur)[0]||{score:0}).score;
 function addRun(run){
   const d=loadRecords(), prev=ranking(d.runs,run.text,run.mode,run.dur)[0];
   const best=prev?prev.score:0, isBest = run.score>best && run.score>0;
@@ -1339,7 +1385,7 @@ function end(failedAt){ // failedAt: ハードコアでミスした時点の経�
     stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate});
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
-  $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
+  $('#rCrit').textContent=critN; $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
   renderDetail(T); shareText=makeShareText(wpm,acc);
   $('#rFail').hidden=!failedAt; if(failedAt) $('#rFail').textContent=`ミスで終了（${failedAt.toFixed(1)}秒）`;
   $('#game').hidden=true; $('#result').hidden=false; syncScroll();
