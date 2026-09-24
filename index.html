@@ -74,6 +74,12 @@ body.fever #stageTag{display:inline-block; animation:hue 1.2s linear infinite}
 body.fever #gauge i{background:linear-gradient(90deg,var(--t2),var(--t3),var(--t4),var(--t0),var(--t1))}
 @keyframes gshake{50%{transform:translateY(-1.5px)}}
 
+#reading{min-height:2.6em; font-size:clamp(16px,2vw,21px); line-height:1.3; font-family:"Hiragino Sans","Noto Sans JP",sans-serif}
+#reading .rt{color:var(--dim)}
+#reading .rt b{font-weight:400; color:var(--text)}
+#reading .rt .done{color:color-mix(in srgb, var(--dim) 55%, transparent)}
+#reading .rk{font-size:.62em; color:var(--dim); margin-top:.2em; letter-spacing:.04em}
+#reading .rk b{font-weight:400; color:var(--accent)}
 #words-wrap{position:relative; font-size:clamp(20px,2.6vw,30px); line-height:1.6; height:4.8em; overflow:hidden; user-select:none; -webkit-user-select:none}
 #words{display:flex; flex-wrap:wrap; column-gap:.6em}
 .word{white-space:nowrap}
@@ -177,7 +183,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   <header>
     <div class="brand">typeburst</div>
     <nav class="opts" aria-label="設定">
-      <div class="group" data-key="text" data-type="str"><button data-v="words">英単語</button><button data-v="sentence">英文</button></div>
+      <div class="group" data-key="text" data-type="str"><button data-v="words">英単語</button><button data-v="sentence">英文</button><button data-v="roma">ローマ字</button></div>
       <div class="group" data-key="mode" data-type="str"><button data-v="normal">ノーマル</button><button data-v="hard">ハード</button></div>
       <div class="group" data-key="dur"><button data-v="30">30秒</button><button data-v="60">60秒</button></div>
       <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
@@ -197,6 +203,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <span id="modeTag" hidden>hard</span>
     </div>
     <div id="gauge" aria-hidden="true"><i></i></div>
+    <div id="reading" hidden aria-live="polite"><div class="rt"></div><div class="rk"></div></div>
     <div id="words-wrap">
       <input id="kb" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="タイピング入力">
       <div id="words"></div><div id="caret" class="idle"></div>
@@ -303,6 +310,210 @@ const SENTENCES=(
 "we cheered when the rocket left the ground"
 ).split("|"); // 自作の短い英文（小文字・句読点なし）
 
+// 自作の短い日本語文。「表示|読み」、スペースは文節の区切り（1文節＝1単語として打つ）
+const JA_SENTENCES=`
+今日は いい 天気ですね。|きょうは いい てんきですね。
+駅前の パン屋は 朝早くから 開いています。|えきまえの ぱんやは あさはやくから あいています。
+猫が 窓辺で 昼寝を している。|ねこが まどべで ひるねを している。
+週末は 家族で 海へ 行きます。|しゅうまつは かぞくで うみへ いきます。
+雨が 降りそうなので 傘を 持っていこう。|あめが ふりそうなので かさを もっていこう。
+新しい 靴で 近所を 散歩した。|あたらしい くつで きんじょを さんぽした。
+図書館で 静かに 本を 読む。|としょかんで しずかに ほんを よむ。
+弟は 毎朝 牛乳を 飲んでいる。|おとうとは まいあさ ぎゅうにゅうを のんでいる。
+夏休みに 友達と キャンプを した。|なつやすみに ともだちと きゃんぷを した。
+コーヒーを 一杯 お願いします。|こーひーを いっぱい おねがいします。
+電車が 少し 遅れています。|でんしゃが すこし おくれています。
+桜の 花が きれいに 咲いた。|さくらの はなが きれいに さいた。
+冷蔵庫に プリンが 残っている。|れいぞうこに ぷりんが のこっている。
+明日は 早起きして 山に 登る。|あしたは はやおきして やまに のぼる。
+母が 作る カレーは 世界一だ。|ははが つくる かれーは せかいいちだ。
+風が 強くて 帽子が 飛ばされた。|かぜが つよくて ぼうしが とばされた。
+夜空に 星が たくさん 見える。|よぞらに ほしが たくさん みえる。
+宿題を 終わらせてから ゲームを する。|しゅくだいを おわらせてから げーむを する。
+公園の ベンチで お弁当を 食べた。|こうえんの べんちで おべんとうを たべた。
+部屋の 掃除を したら すっきりした。|へやの そうじを したら すっきりした。
+兄は ギターの 練習を している。|あには ぎたーの れんしゅうを している。
+駅までは 歩いて 十分ほどです。|えきまでは あるいて じゅっぷんほどです。
+雪が 積もって 町が 真っ白に なった。|ゆきが つもって まちが まっしろに なった。
+祖母の 家には 大きな 柿の 木が ある。|そぼの いえには おおきな かきの きが ある。
+寝る 前に 歯を 磨こう。|ねる まえに はを みがこう。
+この 店の ラーメンは とても おいしい。|この みせの らーめんは とても おいしい。
+今度の 日曜日に 映画を 見に 行こう。|こんどの にちようびに えいがを みに いこう。
+庭の トマトが 赤く 色づいた。|にわの とまとが あかく いろづいた。
+先生の 話を よく 聞いてください。|せんせいの はなしを よく きいてください。
+川の 水が とても 冷たい。|かわの みずが とても つめたい。
+朝ごはんに パンと 卵を 食べた。|あさごはんに ぱんと たまごを たべた。
+犬が しっぽを 振って 待っている。|いぬが しっぽを ふって まっている。
+窓を 開けて 空気を 入れ替えよう。|まどを あけて くうきを いれかえよう。
+駅の ホームで 友達に 会った。|えきの ほーむで ともだちに あった。
+夕焼けが 空を オレンジ色に 染める。|ゆうやけが そらを おれんじいろに そめる。
+財布を 家に 忘れてしまった。|さいふを いえに わすれてしまった。
+妹は 絵を 描くのが 好きだ。|いもうとは えを かくのが すきだ。
+夏は 冷たい 麦茶が 一番だ。|なつは つめたい むぎちゃが いちばんだ。
+バスに 乗って 隣の 町へ 行く。|ばすに のって となりの まちへ いく。
+春に なると 鳥の 声が 増える。|はるに なると とりの こえが ふえる。
+誕生日に ケーキを 焼いた。|たんじょうびに けーきを やいた。
+自転車の タイヤに 空気を 入れる。|じてんしゃの たいやに くうきを いれる。
+遠くに 富士山が 見える。|とおくに ふじさんが みえる。
+休み時間に 校庭で 走り回った。|やすみじかんに こうていで はしりまわった。
+小さな 花が 道端に 咲いている。|ちいさな はなが みちばたに さいている。
+お風呂に 入って 体を 温める。|おふろに はいって からだを あたためる。
+海の 向こうに 島が 見える。|うみの むこうに しまが みえる。
+父は 毎晩 新聞を 読む。|ちちは まいばん しんぶんを よむ。
+机の 上を きれいに 片付けた。|つくえの うえを きれいに かたづけた。
+今夜は 月が とても 明るい。|こんやは つきが とても あかるい。
+スーパーで 野菜と 果物を 買った。|すーぱーで やさいと くだものを かった。
+手紙を 書いて ポストに 入れた。|てがみを かいて ぽすとに いれた。
+秋の 山は 紅葉で 赤く なる。|あきの やまは こうようで あかく なる。
+友達に 誕生日の プレゼントを 渡した。|ともだちに たんじょうびの ぷれぜんとを わたした。
+電気を 消して 早く 寝よう。|でんきを けして はやく ねよう。
+雨上がりの 空に 虹が 出た。|あめあがりの そらに にじが でた。
+駅前に 新しい カフェが できた。|えきまえに あたらしい かふぇが できた。
+ピアノの 音が 隣の 部屋から 聞こえる。|ぴあのの おとが となりの へやから きこえる。
+毎日 少しずつ 練習を 続けよう。|まいにち すこしずつ れんしゅうを つづけよう。
+おにぎりを 三つ 作った。|おにぎりを みっつ つくった。
+道に 迷って 地図を 広げた。|みちに まよって ちずを ひろげた。
+波の 音を 聞きながら 砂浜を 歩く。|なみの おとを ききながら すなはまを あるく。
+今朝は 少し 寒かった。|けさは すこし さむかった。
+金魚が 水槽の 中を 泳いでいる。|きんぎょが すいそうの なかを およいでいる。
+帰りに 牛乳を 買ってきてね。|かえりに ぎゅうにゅうを かってきてね。
+屋根の 上で 鳩が 鳴いている。|やねの うえで はとが ないている。
+夏祭りで 金魚すくいを した。|なつまつりで きんぎょすくいを した。
+パソコンの 画面が 急に 暗く なった。|ぱそこんの がめんが きゅうに くらく なった。
+雲の 間から 日が 差してきた。|くもの あいだから ひが さしてきた。
+彼は いつも 笑顔で あいさつする。|かれは いつも えがおで あいさつする。
+温かい スープで 体が 温まった。|あたたかい すーぷで からだが あたたまった。
+来週 テストが あるので 勉強する。|らいしゅう てすとが あるので べんきょうする。
+庭で 小さな カエルを 見つけた。|にわで ちいさな かえるを みつけた。
+朝の 空気は 気持ちが いい。|あさの くうきは きもちが いい。
+約束の 時間に 間に合った。|やくそくの じかんに まにあった。
+台所から いい においが する。|だいどころから いい においが する。
+川沿いの 道を ジョギングする。|かわぞいの みちを じょぎんぐする。
+風鈴の 音が 涼しげに 響く。|ふうりんの おとが すずしげに ひびく。
+お気に入りの 歌を 口ずさむ。|おきにいりの うたを くちずさむ。
+机の 引き出しに 鍵を しまった。|つくえの ひきだしに かぎを しまった。
+駅の 階段を 急いで 駆け上がった。|えきの かいだんを いそいで かけあがった。
+冬の 朝は 布団から 出たくない。|ふゆの あさは ふとんから でたくない。
+祖父は 昔の 話を するのが 好きだ。|そふは むかしの はなしを するのが すきだ。
+窓の 外で 雨が 降り始めた。|まどの そとで あめが ふりはじめた。
+新しい ノートに 名前を 書いた。|あたらしい のーとに なまえを かいた。
+ひまわりが 太陽の ほうを 向いている。|ひまわりが たいようの ほうを むいている。
+駅前の 本屋で 雑誌を 買った。|えきまえの ほんやで ざっしを かった。
+今日の 夕飯は 焼き魚です。|きょうの ゆうはんは やきざかなです。
+階段で 転ばないように 気を つけて。|かいだんで ころばないように きを つけて。
+朝顔の つるが 伸びてきた。|あさがおの つるが のびてきた。
+隣の 家の 犬は とても 大きい。|となりの いえの いぬは とても おおきい。
+ゆっくり 深呼吸を してみよう。|ゆっくり しんこきゅうを してみよう。
+土曜日は 午前中に 買い物を する。|どようびは ごぜんちゅうに かいものを する。
+船が 港を ゆっくり 出ていく。|ふねが みなとを ゆっくり でていく。
+山の 頂上から 町が 小さく 見えた。|やまの ちょうじょうから まちが ちいさく みえた。
+弟と 一緒に 雪だるまを 作った。|おとうとと いっしょに ゆきだるまを つくった。
+この 道を まっすぐ 進んでください。|この みちを まっすぐ すすんでください。
+花瓶に 花を 飾った。|かびんに はなを かざった。
+お茶を 入れたので 休憩しよう。|おちゃを いれたので きゅうけいしよう。
+遠足の 前の 日は なかなか 眠れない。|えんそくの まえの ひは なかなか ねむれない。
+夜の 町に 明かりが ともる。|よるの まちに あかりが ともる。
+母に 電話を かけた。|ははに でんわを かけた。
+たまには のんびり 過ごそう。|たまには のんびり すごそう。
+信号が 青に 変わった。|しんごうが あおに かわった。
+森の 中は ひんやりと している。|もりの なかは ひんやりと している。
+洗濯物が よく 乾いた。|せんたくものが よく かわいた。
+学校の 帰りに 友達と 話した。|がっこうの かえりに ともだちと はなした。
+みかんの 皮を むいて 食べる。|みかんの かわを むいて たべる。
+野球の 試合は 雨で 中止に なった。|やきゅうの しあいは あめで ちゅうしに なった。
+机に 向かって 日記を 書く。|つくえに むかって にっきを かく。
+坂道を 自転車で 下る。|さかみちを じてんしゃで くだる。
+旅行の 写真を アルバムに 貼った。|りょこうの しゃしんを あるばむに はった。
+朝から 蝉が 元気に 鳴いている。|あさから せみが げんきに ないている。
+ドアを そっと 閉めた。|どあを そっと しめた。
+眠くなったので 少し 横に なる。|ねむくなったので すこし よこに なる。
+今年の 冬は 雪が 多い。|ことしの ふゆは ゆきが おおい。
+電車の 窓から 海が 見えた。|でんしゃの まどから うみが みえた。
+クッキーを 焼いて 友達に 配った。|くっきーを やいて ともだちに くばった。
+先に 手を 洗ってから 食べよう。|さきに てを あらってから たべよう。
+静かな 夜に 虫の 声が 聞こえる。|しずかな よるに むしの こえが きこえる。
+彼女は 毎朝 ヨガを している。|かのじょは まいあさ よがを している。
+雨の 日は 家で 映画を 見る。|あめの ひは いえで えいがを みる。
+駅で 切符を 買った。|えきで きっぷを かった。
+紙飛行機が 遠くまで 飛んだ。|かみひこうきが とおくまで とんだ。
+休日は 公園で 本を 読む。|きゅうじつは こうえんで ほんを よむ。
+夏の 夜に 花火を 見上げた。|なつの よるに はなびを みあげた。
+赤ちゃんが すやすや 眠っている。|あかちゃんが すやすや ねむっている。
+鏡の 前で 髪を 整えた。|かがみの まえで かみを ととのえた。
+今日は 一日中 雨だった。|きょうは いちにちじゅう あめだった。
+新しい 自転車を 買ってもらった。|あたらしい じてんしゃを かってもらった。
+兄と 将棋を して 負けた。|あにと しょうぎを して まけた。
+草原を 馬が 走っている。|そうげんを うまが はしっている。
+駅の 近くに 大きな 公園が ある。|えきの ちかくに おおきな こうえんが ある。
+すいかを 冷やして 食べた。|すいかを ひやして たべた。
+長い トンネルを 抜けると 海だった。|ながい とんねるを ぬけると うみだった。
+机の 上に メモを 残した。|つくえの うえに めもを のこした。
+猫が 毛糸玉で 遊んでいる。|ねこが けいとだまで あそんでいる。
+朝日が 山の 向こうから 昇る。|あさひが やまの むこうから のぼる。
+遅刻しないように 急いで 家を 出た。|ちこくしないように いそいで いえを でた。
+公園の 池に カモが いる。|こうえんの いけに かもが いる。
+ラジオから 懐かしい 曲が 流れた。|らじおから なつかしい きょくが ながれた。
+夕方に なると 風が 涼しく なる。|ゆうがたに なると かぜが すずしく なる。
+祭りの 太鼓の 音が 聞こえる。|まつりの たいこの おとが きこえる。
+この 本は とても 面白かった。|この ほんは とても おもしろかった。
+雨どいから 水が あふれている。|あまどいから みずが あふれている。
+パンに バターを たっぷり 塗った。|ぱんに ばたーを たっぷり ぬった。
+遠くの 空で 雷が 鳴った。|とおくの そらで かみなりが なった。
+玄関に 靴を そろえて 置く。|げんかんに くつを そろえて おく。
+休みの 日に 部屋の 模様替えを した。|やすみの ひに へやの もようがえを した。
+田んぼに カエルの 声が 響く。|たんぼに かえるの こえが ひびく。
+駅前の 時計は 少し 進んでいる。|えきまえの とけいは すこし すすんでいる。
+お昼に そばを 食べに 行こう。|おひるに そばを たべに いこう。
+机の 下で 猫が 丸くなっている。|つくえの したで ねこが まるくなっている。
+ゆっくり 歩いても 間に合うよ。|ゆっくり あるいても まにあうよ。
+春の 風が 心地よい。|はるの かぜが ここちよい。
+友達から 手紙が 届いた。|ともだちから てがみが とどいた。
+海で 貝殻を 拾った。|うみで かいがらを ひろった。
+毎朝 同じ 電車に 乗る。|まいあさ おなじ でんしゃに のる。
+暑いので エアコンを つけた。|あついので えあこんを つけた。
+庭に 小鳥が 遊びに 来た。|にわに ことりが あそびに きた。
+明日の 準備を してから 寝る。|あしたの じゅんびを してから ねる。
+公園で 子どもたちが 鬼ごっこを している。|こうえんで こどもたちが おにごっこを している。
+焼きたての パンは 香りが いい。|やきたての ぱんは かおりが いい。
+階段を 上ると 屋上に 出る。|かいだんを のぼると おくじょうに でる。
+冬に なると 鍋料理が 恋しく なる。|ふゆに なると なべりょうりが こいしく なる。
+窓ガラスに 雨粒が ついている。|まどがらすに あまつぶが ついている。
+姉は 英語を 話すのが 得意だ。|あねは えいごを はなすのが とくいだ。
+旅先で おいしい 魚を 食べた。|たびさきで おいしい さかなを たべた。
+山道で リスを 見かけた。|やまみちで りすを みかけた。
+キッチンで 母と 料理を した。|きっちんで ははと りょうりを した。
+空港は 旅行客で にぎわっていた。|くうこうは りょこうきゃくで にぎわっていた。
+電池が 切れて 時計が 止まった。|でんちが きれて とけいが とまった。
+今日は 久しぶりに 晴れた。|きょうは ひさしぶりに はれた。
+夜に なると 町が 静かに なる。|よるに なると まちが しずかに なる。
+駅の 売店で 水を 買った。|えきの ばいてんで みずを かった。
+公園の 噴水が きらきら 光る。|こうえんの ふんすいが きらきら ひかる。
+毎週 金曜日は カレーの 日だ。|まいしゅう きんようびは かれーの ひだ。
+夏の 日差しは とても 強い。|なつの ひざしは とても つよい。
+友達と 一緒に 宿題を した。|ともだちと いっしょに しゅくだいを した。
+紅茶に レモンを 入れた。|こうちゃに れもんを いれた。
+朝の 散歩で 近所の 人に 会った。|あさの さんぽで きんじょの ひとに あった。
+雪の 上に 足跡が 続いている。|ゆきの うえに あしあとが つづいている。
+風邪を ひいたので 学校を 休んだ。|かぜを ひいたので がっこうを やすんだ。
+子犬が 元気に 走り回っている。|こいぬが げんきに はしりまわっている。
+静かな 喫茶店で 本を 読んだ。|しずかな きっさてんで ほんを よんだ。
+月に 一度 髪を 切る。|つきに いちど かみを きる。
+花屋の 前は いつも いい 香りが する。|はなやの まえは いつも いい かおりが する。
+トンボが 空を すいすい 飛ぶ。|とんぼが そらを すいすい とぶ。
+また 明日 会おうね。|また あした あおうね。
+一歩ずつ 前に 進もう。|いっぽずつ まえに すすもう。
+雨の 音を 聞きながら 眠った。|あめの おとを ききながら ねむった。
+駅前の 広場に 人が 集まっている。|えきまえの ひろばに ひとが あつまっている。
+冷たい 水で 顔を 洗った。|つめたい みずで かおを あらった。
+庭の 木に 実が なった。|にわの きに みが なった。
+週に 三回 プールで 泳ぐ。|しゅうに さんかい ぷーるで およぐ。
+机の 上の 花が しおれてしまった。|つくえの うえの はなが しおれてしまった。
+遠くから 汽笛の 音が 聞こえた。|とおくから きてきの おとが きこえた。
+夕飯の 後に みんなで トランプを した。|ゆうはんの あとに みんなで とらんぷを した。
+朝の 光が 部屋に 差し込む。|あさの ひかりが へやに さしこむ。
+今日も 一日 お疲れさまでした。|きょうも いちにち おつかれさまでした。
+`.trim().split('\n').map(l=>{ const [t,k]=l.split('|'); return {t:t.split(' '), k:k.split(' ')}; });
+
 const $ = s => document.querySelector(s);
 const root = document.documentElement;
 const wordsEl=$('#words'), wrap=$('#words-wrap'), caret=$('#caret'), timerEl=$('#timer'),
@@ -343,7 +554,7 @@ const THEMES={
 };
 const THEME_ORDER=['night','mono','paper','cream','ocean','forest','twilight','sakura','ember','cyber'];
 if(!THEMES[settings.theme]) settings.theme='night';
-const TEXT_NAME={words:'英単語', sentence:'英文'};
+const TEXT_NAME={words:'英単語', sentence:'英文', roma:'ローマ字'};
 if(!TEXT_NAME[settings.text]) settings.text='words';
 const MODE_MULT={normal:1, hard:1.5};
 if(!MODE_MULT[settings.mode]) settings.mode='normal';
@@ -726,6 +937,67 @@ function fxTier(){ const m=mult(), [x,y,r]=center(wrap);
   camPunch(1.03);
 }
 
+/* ---------- romaji ---------- */
+// かな1〜2文字 → ローマ字の候補（先頭がガイドに使う綴り）
+const ROMA=(()=>{
+  const t={}, add=(k,v)=>t[k]=v.split(' ');
+  `あ a|い i yi|う u wu whu|え e|お o|か ka ca|き ki|く ku cu qu|け ke|こ ko co|さ sa|し shi si ci|す su|せ se ce|そ so|
+た ta|ち chi ti|つ tsu tu|て te|と to|な na|に ni|ぬ nu|ね ne|の no|は ha|ひ hi|ふ fu hu|へ he|ほ ho|ま ma|み mi|む mu|め me|も mo|
+や ya|ゆ yu|よ yo|ら ra|り ri|る ru|れ re|ろ ro|わ wa|を wo|が ga|ぎ gi|ぐ gu|げ ge|ご go|ざ za|じ ji zi|ず zu|ぜ ze|ぞ zo|
+だ da|ぢ di|づ du|で de|ど do|ば ba|び bi|ぶ bu|べ be|ぼ bo|ぱ pa|ぴ pi|ぷ pu|ぺ pe|ぽ po|ゔ vu|ー -|
+ぁ la xa|ぃ li xi|ぅ lu xu|ぇ le xe|ぉ lo xo|ゃ lya xya|ゅ lyu xyu|ょ lyo xyo|ゎ lwa xwa|っ ltu xtu ltsu xtsu|
+きゃ kya|きゅ kyu|きょ kyo|きぇ kye|しゃ sha sya|しゅ shu syu|しょ sho syo|しぇ she sye|ちゃ cha tya cya|ちゅ chu tyu cyu|ちょ cho tyo cyo|ちぇ che tye cye|
+にゃ nya|にゅ nyu|にょ nyo|ひゃ hya|ひゅ hyu|ひょ hyo|みゃ mya|みゅ myu|みょ myo|りゃ rya|りゅ ryu|りょ ryo|
+ぎゃ gya|ぎゅ gyu|ぎょ gyo|じゃ ja zya jya|じゅ ju zyu jyu|じょ jo zyo jyo|じぇ je zye jye|ぢゃ dya|ぢゅ dyu|ぢょ dyo|
+びゃ bya|びゅ byu|びょ byo|ぴゃ pya|ぴゅ pyu|ぴょ pyo|ふぁ fa|ふぃ fi|ふぇ fe|ふぉ fo|ふゅ fyu|てぃ thi|でぃ dhi|でゅ dhu|
+とぅ twu|どぅ dwu|うぃ wi|うぇ we|うぉ who|ゔぁ va|ゔぃ vi|ゔぇ ve|ゔぉ vo|つぁ tsa`
+    .split('|').forEach(x=>{ const [k,...v]=x.trim().split(' '); add(k,v.join(' ')); });
+  return t;
+})();
+const toHira = s => s.replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+/* かな文字列を「打つ単位」ごとの候補リストに分ける。っ・ん は次の単位とまとめる */
+function kanaUnits(kana){
+  kana=toHira(kana); const base=[];
+  for(let i=0;i<kana.length;){
+    const two=kana.slice(i,i+2);
+    if(two.length===2 && ROMA[two]){ // 拗音など：まとめ打ち＋分けて打つ
+      const c=[...ROMA[two]]; ROMA[two[0]].forEach(a=>ROMA[two[1]].forEach(b=>c.push(a+b)));
+      base.push({k:two,c}); i+=2; continue;
+    }
+    const one=kana[i];
+    if(!ROMA[one] && one!=='ん') throw new Error('ローマ字にできない文字: '+one+' ('+kana+')');
+    base.push({k:one,c:one==='ん'?null:[...ROMA[one]]}); i++;
+  }
+  const out=[];
+  for(let i=base.length-1;i>=0;i--){
+    const u=base[i], nx=out[0];
+    if(u.k==='っ' && nx && !/^[あいうえおんっー]/.test(nx.k)){
+      const c=[];
+      nx.c.forEach(x=>{ if(!/^[aiueon-]/.test(x)){ if(x.startsWith('ch')) c.push('t'+x); c.push(x[0]+x); } });
+      ROMA['っ'].forEach(t=>nx.c.forEach(x=>c.push(t+x)));
+      out[0]={k:'っ'+nx.k, c:[...new Set(c)]};
+    } else if(u.k==='ん'){
+      if(nx){ const c=[];
+        nx.c.forEach(x=>{ if(!/^[aiueoyn]/.test(x)) c.push('n'+x); });
+        nx.c.forEach(x=>{ c.push('nn'+x); c.push('xn'+x); });
+        out[0]={k:'ん'+nx.k, c:[...new Set(c)]};
+      } else out.unshift({k:'ん', c:['nn','xn']});
+    } else out.unshift({k:u.k, c:u.c});
+  }
+  return out;
+}
+/* 打った文字列が途中まで正しければ「打った分＋残りの第一候補」を返す。間違いなら null */
+function romaMatch(units,typed){
+  const rest = i => units.slice(i).map(u=>u.c[0]).join('');
+  const rec = (i,s) => {
+    if(i===units.length) return s==='' ? '' : null;
+    for(const c of units[i].c) if(s.length>=c.length && s.startsWith(c)){ const r=rec(i+1,s.slice(c.length)); if(r!==null) return c+r; }
+    for(const c of units[i].c) if(c.length>s.length && c.startsWith(s)) return c+rest(i+1);
+    return null;
+  };
+  return rec(0,typed);
+}
+
 /* ---------- game ---------- */
 let words=[], wordEls=[], wi=0, firstVis=0, typed='', started=false, ended=false, t0=0, timerId=0, lastSec=0;
 let combo=0, maxCombo=0, streak=0, okKeys=0, allKeys=0, okChars=0, lineH=0;
@@ -733,7 +1005,7 @@ let secKeys=[], missMap={}; // 1秒ごとの正解打鍵の累計、キーごと
 const esc = c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c);
 const pick = () => WORD_LIST[Math.random()*WORD_LIST.length|0];
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
-let sentQueue=[];
+let sentQueue=[], jaQueue=[], meta=[]; // meta[i]: ローマ字モードの判定用データ {u,si,ci}
 /* 出題モードごとに次の単語を返す（英文は文をシャッフルして順に流す） */
 function nextWord(){
   if(settings.text==='sentence'){
@@ -750,10 +1022,18 @@ function renderWord(i,input){
   for(let k=w.length;k<input.length;k++) h+=`<span class="extra">${esc(input[k])}</span>`;
   wordEls[i].innerHTML=h;
 }
+/* ローマ字モード：文をシャッフルし、文節ごとに1単語として流す */
+function nextRoma(){
+  if(!jaQueue.length) jaQueue=shuffle(JA_SENTENCES.map((_,i)=>i)).flatMap(si=>JA_SENTENCES[si].k.map((_,ci)=>[si,ci]));
+  const [si,ci]=jaQueue.shift(), u=kanaUnits(JA_SENTENCES[si].k[ci].replace(/[、。！？]/g,''));
+  return {w:romaMatch(u,''), m:{u,si,ci}};
+}
+const isRoma = () => settings.text==='roma';
 function addWords(n){
   for(let i=0;i<n;i++){
-    const w=nextWord();
-    words.push(w);
+    let w, m=null;
+    if(isRoma()) ({w,m}=nextRoma()); else w=nextWord();
+    words.push(w); meta.push(m);
     const el=document.createElement('div'); el.className='word';
     wordEls.push(el); wordsEl.appendChild(el); renderWord(words.length-1,'');
   }
@@ -776,6 +1056,13 @@ function checkScroll(){
   }
   if(words.length-wi<40) addWords(60);
 }
+function syncReading(){
+  const box=$('#reading'); box.hidden=!isRoma(); if(!isRoma()) return;
+  const m=meta[wi]; if(!m) return; const S=JA_SENTENCES[m.si];
+  const mark=(arr,cur)=>arr.map((x,i)=>i<cur?`<span class="done">${x}</span>`:i===cur?`<b>${x}</b>`:x).join('');
+  box.querySelector('.rt').innerHTML=mark(S.t,m.ci);
+  box.querySelector('.rk').innerHTML=mark(S.k,m.ci);
+}
 function updateCombo(pop){
   comboEl.textContent=combo;
   comboBox.classList.toggle('live',combo>=5);
@@ -785,7 +1072,7 @@ function restart(){
   clearInterval(timerId); stopFever();
   feverTime=0; maxStage=0; gauge=0; score=0; shown=0; lastMult=0;
   shards.length=0; lines.length=0; chordIdx=0; noteIdx=0;
-  words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed=''; sentQueue=[];
+  words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed=''; sentQueue=[]; jaQueue=[]; meta=[];
   started=false; ended=false; combo=0; maxCombo=0; streak=0; okKeys=0; allKeys=0; okChars=0;
   secKeys=[]; missMap={};
   setTier(0);
@@ -793,7 +1080,8 @@ function restart(){
   syncScroll();
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
-  addWords(80); updateCombo(false); updateMultUI(); syncGauge();
+  addWords(80); updateCombo(false); updateMultUI(); syncGauge(); syncReading();
+  tapcover.textContent = isRoma() ? 'タップしてキーボードを出す（英字入力に切り替えてください）' : 'タップしてキーボードを出す';
   if(typeof resetKb==='function'){ resetKb(); syncCover(); }
   requestAnimationFrame(()=>{ lineH=wordEls[0].offsetHeight; placeCaret(); });
 }
@@ -818,12 +1106,17 @@ function breakCombo(){ combo=0; streak=0; if(tier>0) setTier(0); updateMultUI();
 
 function onChar(ch){
   if(!started) start();
-  const w=words[wi], idx=typed.length;
+  let w=words[wi]; const idx=typed.length;
   if(idx>=w.length+8) return;
-  typed+=ch; allKeys++;
+  let ok;
+  if(isRoma()){ // 打った綴りに合わせてガイドを更新。間違いは入力を進めない
+    const g=romaMatch(meta[wi].u,typed+ch); allKeys++; ok=!!g;
+    if(ok){ typed+=ch; words[wi]=g; }
+  } else { typed+=ch; allKeys++; ok = idx<w.length && w[idx]===ch; }
   renderWord(wi,typed); placeCaret();
-  const span=wordEls[wi].children[idx];
-  if(idx<w.length && w[idx]===ch){
+  const span=wordEls[wi].children[Math.min(idx,wordEls[wi].children.length-1)];
+  w=words[wi];
+  if(ok){
     okKeys++; combo++; maxCombo=Math.max(maxCombo,combo);
     fxKey(span); sfx.key();
     noteIdx++; if(!fstage && noteIdx%16===0) chordIdx++;
@@ -831,6 +1124,7 @@ function onChar(ch){
     if(nt>tier){ setTier(nt); fxTier(); sfx.tier(); }
     score+=Math.round(10*multiplier());
     updateMultUI(); addGauge(GAIN_KEY[fstage]);
+    if(isRoma() && typed===words[wi]){ updateCombo(true); submitWord(); return; } // 文節を打ち切ったら自動で確定
   } else {
     if(idx<w.length) missMap[w[idx]]=(missMap[w[idx]]||0)+1;
     fxMiss(span); sfx.miss();
@@ -841,7 +1135,7 @@ function onChar(ch){
 function submitWord(){
   const w=words[wi], el=wordEls[wi];
   if(typed===w){
-    okChars+=w.length+1; streak++;
+    okChars+=w.length+(isRoma()?0:1); streak++;
     const P=Math.round((w.length*25+streak*5)*multiplier());
     fxWord(el,P); sfx.word(streak); addGauge(GAIN_WORD);
   } else {
@@ -850,7 +1144,7 @@ function submitWord(){
     updateCombo(false);
   }
   wi++; typed='';
-  checkScroll(); placeCaret();
+  checkScroll(); placeCaret(); syncReading();
 }
 /* ---------- records ---------- */
 const REC_KEY='typeburst-records', RANK_N=10, HIST_N=20;
@@ -989,8 +1283,8 @@ function end(){
 }
 function handleKey(k){
   if(ended) return;
-  if(k==='Backspace'){ if(typed.length){ typed=typed.slice(0,-1); renderWord(wi,typed); placeCaret(); } return; }
-  if(k===' '){ if(typed.length) submitWord(); return; }
+  if(k==='Backspace'){ if(typed.length){ typed=typed.slice(0,-1); if(isRoma()) words[wi]=romaMatch(meta[wi].u,typed); renderWord(wi,typed); placeCaret(); } return; }
+  if(k===' '){ if(typed.length && !isRoma()) submitWord(); return; } // ローマ字モードは自動確定なのでスペース不要
   onChar(k);
 }
 
