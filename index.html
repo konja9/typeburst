@@ -115,7 +115,24 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 #again{color:var(--text); background:var(--bg2); padding:.6rem 1.3rem; border-radius:8px}
 #again:hover{color:var(--accent)}
 
+#recBtn{color:var(--text)}
+#recBtn:hover{color:var(--accent)}
+#records{display:flex; flex-direction:column; gap:1.2rem}
+.rec-head{display:flex; justify-content:space-between; align-items:center; gap:1rem}
+.rec-head h2{margin:0; font-size:22px; font-weight:800}
+.tabs{display:flex; flex-wrap:wrap; gap:.3rem; background:var(--bg2); padding:.35rem; border-radius:10px; align-self:flex-start; font-size:14px}
+.rec-body{display:grid; grid-template-columns:1fr 1fr; gap:1rem 2.4rem; max-height:min(60vh,560px); overflow:auto; overscroll-behavior:contain}
+.rec-body h3{margin:0 0 .5rem; font-size:14px; color:var(--dim); font-weight:400}
+.rec-body table{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
+.rec-body td,.rec-body th{padding:.32rem .4rem; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bg2)}
+.rec-body th{color:var(--dim); font-weight:400}
+.rec-body td:first-child,.rec-body th:first-child{text-align:left}
+.rec-body td.sc{font-weight:800}
+.rec-body tr.now td{color:var(--accent)}
+.rec-body .empty{color:var(--dim); font-size:14px; margin:0}
 @media (max-width:700px){
+  .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
+  .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
   body{place-items:start center}
   #cam{padding-top:1rem}
   #stage{gap:1.4rem}
@@ -140,6 +157,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
       <div class="group" data-key="fx"><span>演出</span><button data-v="0">弱</button><button data-v="1">中</button><button data-v="2">強</button></div>
       <div class="group" data-key="theme" data-type="str"><span>テーマ</span></div>
+      <button id="recBtn">記録</button>
     </nav>
   </header>
 
@@ -171,7 +189,16 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div><span>自己ベスト</span><b id="rBest">0</b></div>
     </div>
     <p id="rNew" hidden>自己ベスト更新</p>
-    <div class="actions"><button id="again">もう一度</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
+    <div class="actions"><button id="again">もう一度</button><button id="recBtn2">記録を見る</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
+  </section>
+
+  <section id="records" hidden>
+    <div class="rec-head"><h2>記録</h2><button id="recClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="tabs" id="recTabs" role="tablist"></div>
+    <div class="rec-body">
+      <div><h3>ランキング（上位10件）</h3><div id="recRank"></div></div>
+      <div><h3>最近のプレイ（20件）</h3><div id="recHist"></div></div>
+    </div>
   </section>
 </main></div>
 <canvas id="fx"></canvas>
@@ -637,7 +664,7 @@ function restart(){
   words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed='';
   started=false; ended=false; combo=0; maxCombo=0; streak=0; okKeys=0; allKeys=0; okChars=0;
   setTier(0);
-  $('#result').hidden=true; $('#rNew').hidden=true; $('#game').hidden=false;
+  $('#result').hidden=true; $('#rNew').hidden=true; $('#records').hidden=true; recView=null; $('#game').hidden=false;
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
   addWords(80); updateCombo(false); updateMultUI(); syncGauge();
@@ -697,16 +724,76 @@ function submitWord(){
   wi++; typed='';
   checkScroll(); placeCaret();
 }
+/* ---------- records ---------- */
+const REC_KEY='typeburst-records', RANK_N=10, HIST_N=20;
+const CATS=[['normal',30],['normal',60],['hard',30],['hard',60]];
+const MODE_NAME={normal:'ノーマル', hard:'ハード'};
+function loadRecords(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(REC_KEY)); }catch(e){}
+  if(!d || !Array.isArray(d.runs)) d={v:1, runs:[]};
+  if(!d.migrated){ // 以前の自己ベスト（ノーマルのみ）を記録に引き継ぐ
+    [30,60].forEach(dur=>{ let b=0; try{ b=Number(localStorage.getItem('typeburst-bestscore-'+dur))||0; }catch(e){}
+      if(b>0) d.runs.unshift({score:b, mode:'normal', dur, date:0}); });
+    d.migrated=true;
+  }
+  return d;
+}
+function saveRecords(d){ try{ localStorage.setItem(REC_KEY, JSON.stringify(d)); }catch(e){} }
+const ranking = (runs,mode,dur) => runs.filter(r=>r.mode===mode && r.dur===dur).sort((a,b)=>b.score-a.score || a.date-b.date).slice(0,RANK_N);
+function pruneRuns(runs){ // 各区分の上位10件と直近20件だけ残す
+  const keep=new Set(runs.slice(-HIST_N));
+  CATS.forEach(([m,d])=>ranking(runs,m,d).forEach(r=>keep.add(r)));
+  return runs.filter(r=>keep.has(r));
+}
+function addRun(run){
+  const d=loadRecords(), prev=ranking(d.runs,run.mode,run.dur)[0];
+  const best=prev?prev.score:0, isBest = run.score>best && run.score>0;
+  d.runs.push(run); d.runs=pruneRuns(d.runs); saveRecords(d);
+  return {isBest, best:Math.max(best,run.score)};
+}
+const fmtDate = t => { if(!t) return '-'; const d=new Date(t), p=n=>String(n).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const dash = v => v==null ? '-' : v;
+
+let recView=null, recCat=0, lastRunDate=0;
+function renderRecords(){
+  const runs=loadRecords().runs, [mode,dur]=CATS[recCat];
+  $('#recTabs').innerHTML=CATS.map(([m,d],i)=>`<button role="tab" data-i="${i}" class="${i===recCat?'on':''}" aria-selected="${i===recCat}">${MODE_NAME[m]} ${d}秒</button>`).join('');
+  const rank=ranking(runs,mode,dur);
+  $('#recRank').innerHTML = rank.length ? '<table><tr><th>#</th><th>スコア</th><th>WPM</th><th>正確率</th><th>日付</th></tr>'+
+    rank.map((r,i)=>`<tr class="${r.date&&r.date===lastRunDate?'now':''}"><td>${i+1}</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td><td>${fmtDate(r.date)}</td></tr>`).join('')+'</table>'
+    : '<p class="empty">まだ記録がありません</p>';
+  const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
+  $('#recHist').innerHTML = hist.length ? '<table><tr><th>日付</th><th>モード</th><th>スコア</th><th>WPM</th><th>正確率</th></tr>'+
+    hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${MODE_NAME[r.mode]} ${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
+    : '<p class="empty">まだ記録がありません</p>';
+}
+function openRecords(){
+  if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
+  recView = ended ? '#result' : '#game';
+  recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur));
+  resetKb(); kb.blur();
+  $('#game').hidden=true; $('#result').hidden=true; $('#records').hidden=false;
+  renderRecords(); syncCover();
+}
+function closeRecords(){
+  if(!recView) return;
+  $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover();
+}
+$('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
+$('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(recView) closeRecords(); else openRecords(); });
+$('#recBtn2').addEventListener('click',openRecords);
+$('#recClose').addEventListener('click',()=>{ closeRecords(); if(touchOnly && !ended) focusKb(); });
+
 function end(){
   clearInterval(timerId); stopFever(); ended=true; syncGauge();
   resetKb(); kb.blur(); syncCover();
   shards.forEach(s=>score+=s.v); shards.length=0; shown=score;
   const wpm=Math.round(okChars/5/(settings.dur/60));
   const acc=allKeys?Math.round(okKeys/allKeys*100):0;
-  const key=`typeburst-bestscore-${settings.dur}`+(settings.mode==='hard'?'-hard':'');
-  let best=0; try{ best=Number(localStorage.getItem(key))||0; }catch(e){}
-  const isBest = score>best && score>0;
-  if(isBest){ best=score; try{ localStorage.setItem(key,String(score)); }catch(e){} }
+  lastRunDate=Date.now();
+  const {isBest, best} = addRun({score, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
+    stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate});
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
@@ -742,6 +829,7 @@ function handleKey(k){
 /* 物理キーボード（入力欄にフォーカスがないとき） */
 document.addEventListener('keydown',e=>{
   if(e.key==='Tab'){ e.preventDefault(); initAudio(); restart(); return; }
+  if(recView){ if(e.key==='Escape'){ e.preventDefault(); closeRecords(); } return; }
   if(ended){ if(e.key==='Enter'){ e.preventDefault(); restart(); } return; }
   if(e.target===kb) return;               // 入力欄経由の入力は input イベントで処理
   if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing) return;
@@ -753,7 +841,7 @@ const kb=$('#kb'), tapcover=$('#tapcover');
 let prevVal='';
 function resetKb(){ kb.value=''; prevVal=''; }
 kb.addEventListener('input',()=>{
-  if(ended){ resetKb(); return; }
+  if(ended || recView){ resetKb(); return; }
   const v=kb.value.toLowerCase();
   let i=0; while(i<prevVal.length && i<v.length && prevVal[i]===v[i]) i++;
   for(let k=prevVal.length;k>i;k--) handleKey('Backspace');
