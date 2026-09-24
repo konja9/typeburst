@@ -136,6 +136,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 #recBtn{color:var(--text)}
 #recBtn:hover{color:var(--accent)}
 #records{display:flex; flex-direction:column; gap:1.2rem}
+#recTabs{margin-top:-.7rem}
 .rec-head{display:flex; justify-content:space-between; align-items:center; gap:1rem}
 .rec-head h2{margin:0; font-size:22px; font-weight:800}
 .tabs{display:flex; flex-wrap:wrap; gap:.3rem; background:var(--bg2); padding:.35rem; border-radius:10px; align-self:flex-start; font-size:14px}
@@ -147,10 +148,12 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .rec-body td:first-child,.rec-body th:first-child{text-align:left}
 .rec-body td.sc{font-weight:800}
 .rec-body tr.now td{color:var(--accent)}
+.rec-body .tw{overflow-x:auto}
 .rec-body .empty{color:var(--dim); font-size:14px; margin:0}
 @media (max-width:700px){
   .rec-body{grid-template-columns:1fr; max-height:calc(100vh - 220px)}
   .rec-body td,.rec-body th{padding:.28rem .25rem; font-size:13px}
+  .rec-body .acc{display:none}
   body{place-items:start center}
   #cam{padding-top:1rem; padding-bottom:1.5rem}
   #stage{gap:1.4rem}
@@ -174,6 +177,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   <header>
     <div class="brand">typeburst</div>
     <nav class="opts" aria-label="設定">
+      <div class="group" data-key="text" data-type="str"><button data-v="words">英単語</button><button data-v="sentence">英文</button></div>
       <div class="group" data-key="mode" data-type="str"><button data-v="normal">ノーマル</button><button data-v="hard">ハード</button></div>
       <div class="group" data-key="dur"><button data-v="30">30秒</button><button data-v="60">60秒</button></div>
       <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
@@ -224,10 +228,11 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 
   <section id="records" hidden>
     <div class="rec-head"><h2>記録</h2><button id="recClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="tabs" id="recTextTabs" role="tablist"></div>
     <div class="tabs" id="recTabs" role="tablist"></div>
     <div class="rec-body">
-      <div><h3>ランキング（上位10件）</h3><div id="recRank"></div></div>
-      <div><h3>最近のプレイ（20件）</h3><div id="recHist"></div></div>
+      <div><h3>ランキング（上位10件）</h3><div id="recRank" class="tw"></div></div>
+      <div><h3>最近のプレイ（20件）</h3><div id="recHist" class="tw"></div></div>
     </div>
   </section>
 </main></div>
@@ -237,6 +242,67 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 <script>
 const WORD_LIST = ("the be of and a to in he have it that for they with as not on she at by this we you do but from or which one would all will there say who make when can more if no man out other so what time up go about than into could state only new year some take come these know see use get like then first any work now may such give over think most even find day also after way many must look before great back through long where much should well people down own just because good each those feel seem how high too place little world very still nation hand old life tell write become here show house both between need mean call develop under last right move thing general school never same another begin while number part turn real leave might want point form off child few small since against ask late home interest large person end open public follow during present without again hold around possible head consider word program problem however lead system set order eye plan run keep face fact group play stand increase early course change help line light sound water music night fire color river city story north south young ready above ever friend table dream quick bright").split(" ");
 
+const SENTENCES=(
+"the early bird catches the worm|practice makes perfect|the train leaves at seven every morning|she keeps a small garden on the roof"+"|"+
+"a cup of hot tea warms the hands|we walked along the river after dinner|the library opens at nine on weekdays|he painted the old fence bright blue"+"|"+
+"my brother plays the drums too loudly|rain fell softly on the tin roof|the cat sleeps in a box by the window|please close the door when you leave"+"|"+
+"they built a sand castle near the waves|the city lights shine far across the bay|a good book can change the way you think"+"|"+
+"our teacher told a funny story today|the wind blew the leaves across the yard|she learned to swim when she was five"+"|"+
+"the market sells fresh bread every day|i forgot my umbrella at the station|the stars are bright on a clear night|he runs five miles before breakfast"+"|"+
+"the baby laughed at the silly dog|we planted tomatoes in the spring|the old clock stopped at midnight|a quiet walk can clear a busy mind"+"|"+
+"the bus was late because of the snow|she wrote a letter to her grandmother|the kids ran to the park after school|this soup tastes better the next day"+"|"+
+"the coffee shop on the corner is always busy|he fixed the bike with a simple tool|the moon rose slowly over the hills"+"|"+
+"we shared a pizza and watched a movie|my phone battery died in the middle of the call|the museum has a room full of old maps"+"|"+
+"a small step is still a step forward|the mountain road twists through the forest|she sings while she cooks dinner"+"|"+
+"the dog waits by the door every evening|time flies when you are having fun|the ice cream melted in the summer heat|he keeps a notebook for new ideas"+"|"+
+"the waves crashed against the rocks|our neighbor grows roses in her front yard|the plane landed smoothly in the rain"+"|"+
+"we cleaned the house before the guests arrived|the bakery smells wonderful in the morning|a warm blanket makes a cold night better"+"|"+
+"the students listened closely to the speaker|she found a shiny coin on the sidewalk|the river runs quietly under the bridge"+"|"+
+"he always orders the same thing for lunch|the fireworks lit up the summer sky|my sister is learning to play the piano"+"|"+
+"the garden is full of bees and butterflies|we missed the last train and took a taxi|the new game comes out next friday"+"|"+
+"the leaves turn red and gold in autumn|he climbed the tree to rescue the kitten|the soup needs a little more salt"+"|"+
+"she smiled and waved from across the street|the snow covered the town in white|we take turns washing the dishes|the lamp on my desk is too bright"+"|"+
+"the farmer woke up before the sun|a friendly smile can brighten a gray day|the children built a fort out of pillows"+"|"+
+"he dropped his keys in the tall grass|the thunder shook the windows of the house|we packed our bags for a trip to the sea"+"|"+
+"the chef tasted the sauce with a spoon|she reads a chapter every night before bed|the parrot can say hello and goodbye"+"|"+
+"the road ahead is long but beautiful|he saved enough money to buy a guitar|the picnic ended when the rain began|my grandfather tells the best stories"+"|"+
+"the owl called softly in the dark woods|we watched the sunrise from the top of the hill|the printer ran out of paper again"+"|"+
+"she painted a picture of the harbor|the team celebrated their first win|a fresh start can begin on any day|the kettle whistled on the stove"+"|"+
+"he wore a warm scarf in the cold wind|the deer ran quickly into the forest|we wrote our names in the wet sand|the store closes early on sunday"+"|"+
+"she practiced her speech in front of the mirror|the smell of rain filled the air|the boat drifted slowly toward the shore"+"|"+
+"he lost track of time while reading|the classroom was quiet during the test|my favorite season is the start of summer|the puppy chewed on my new shoes"+"|"+
+"we made pancakes for breakfast|the bridge opens to let tall ships pass|she keeps her plants on the kitchen shelf"+"|"+
+"the path was covered in soft green moss|he forgot to turn off the oven|the band played until late at night|a little patience goes a long way"+"|"+
+"the fox crept quietly across the field|we laughed until our sides hurt|the elevator stopped on every floor|she bought a red coat for the winter"+"|"+
+"the ducks swam in a line across the pond|the computer needs to restart for an update|he taught his son how to fish"+"|"+
+"the sunset painted the sky orange and pink|we found a quiet table in the back|the wind turned the pages of my book"+"|"+
+"she jogs around the lake every morning|the mail carrier waved as he passed|the old house creaks when the wind blows|a kind word can make someone smile"+"|"+
+"the soup was too hot to eat right away|he built a small shelf for his books|the rain stopped just before the game"+"|"+
+"we hiked to a waterfall in the valley|the candle flickered in the dark room|she keeps a jar of cookies on the counter"+"|"+
+"the train crossed a long bridge over the lake|the kids chased each other around the yard|he answered every question with a smile"+"|"+
+"the fog rolled in from the sea|we stayed up late talking about the future|the flowers bloom early this year|she tied a ribbon around the gift"+"|"+
+"the city is quiet early on sunday morning|a map helps when you are lost|the puppy fell asleep in my lap|he practiced the same song all afternoon"+"|"+
+"the cold water felt good on a hot day|we counted the stars from the porch|the bell rang and the students ran outside"+"|"+
+"she carried the groceries up the stairs|the hills are green after the rain|the bread is still warm from the oven|he learned a new word every day"+"|"+
+"the cat watched the birds from the window|we rode our bikes along the coast|the clock on the wall is five minutes fast|she keeps her promises"+"|"+
+"the storm passed and the sun came out|a long nap can fix a bad mood|the pilot spoke calmly to the passengers|we painted the bedroom a soft yellow"+"|"+
+"the squirrel hid a nut under the tree|he likes to walk in the rain|the shop window was full of bright toys|she baked a cake for her best friend"+"|"+
+"the lake froze over in the night|the crowd cheered as the runners finished|we picked apples at the farm|the music filled the whole room"+"|"+
+"he took a photo of the full moon|the leaves crunched under our feet|she always carries a small notebook|the kitten played with a ball of yarn"+"|"+
+"a clear plan makes hard work easier|the waiter brought us a basket of bread|we took the long way home|the rain made the streets shine"+"|"+
+"he wakes up early to watch the birds|the ship sailed out of the harbor at dawn|she laughed at her own joke|the wind chimes rang in the breeze"+"|"+
+"the doctor told him to get more sleep|we sat by the fire and roasted marshmallows|the path leads down to a hidden beach"+"|"+
+"he wrote a short poem about the sea|the tea kettle is on the top shelf|she learned to ride a bike last summer|the garden gate squeaks when it opens"+"|"+
+"the dog barked at its own reflection|we met by chance at the train station|the paint is still wet on the door|he carried his little sister on his back"+"|"+
+"a good friend listens more than they talk|the sky turned dark before the storm|she keeps her old letters in a wooden box"+"|"+
+"the city park is full of joggers|the children sang a song for their parents|we waited in line for the new ride|the soup warmed us after the long walk"+"|"+
+"he cannot find his other sock|the bees buzzed around the purple flowers|she opened the window to let in fresh air"+"|"+
+"the kitchen smells like fresh cookies|the stars seemed close enough to touch|we crossed the river on a small wooden boat"+"|"+
+"he works best in the quiet morning hours|the snowman melted in the afternoon sun|she wrapped the present in blue paper"+"|"+
+"the last leaf fell from the tree|every day is a chance to learn something new|the gardener watered the plants before noon"+"|"+
+"we cheered when the rocket left the ground"
+).split("|"); // 自作の短い英文（小文字・句読点なし）
+
 const $ = s => document.querySelector(s);
 const root = document.documentElement;
 const wordsEl=$('#words'), wrap=$('#words-wrap'), caret=$('#caret'), timerEl=$('#timer'),
@@ -245,7 +311,7 @@ const wordsEl=$('#words'), wrap=$('#words-wrap'), caret=$('#caret'), timerEl=$('
 
 /* ---------- settings ---------- */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let settings = {mode:'normal', dur:30, sound:true, fx: reduced ? 0 : 1, theme:'night'};
+let settings = {text:'words', mode:'normal', dur:30, sound:true, fx: reduced ? 0 : 1, theme:'night'};
 try{ const s = JSON.parse(localStorage.getItem('typeburst-settings')); if(s) Object.assign(settings, s); }catch(e){}
 function saveSettings(){ try{ localStorage.setItem('typeburst-settings', JSON.stringify(settings)); }catch(e){} }
 const FXM=[.45,1,1.8];
@@ -277,6 +343,8 @@ const THEMES={
 };
 const THEME_ORDER=['night','mono','paper','cream','ocean','forest','twilight','sakura','ember','cyber'];
 if(!THEMES[settings.theme]) settings.theme='night';
+const TEXT_NAME={words:'英単語', sentence:'英文'};
+if(!TEXT_NAME[settings.text]) settings.text='words';
 const MODE_MULT={normal:1, hard:1.5};
 if(!MODE_MULT[settings.mode]) settings.mode='normal';
 const theme = () => THEMES[settings.theme];
@@ -307,7 +375,7 @@ document.querySelectorAll('.group').forEach(g=>{
       const v=b.dataset.v;
       settings[key] = type==='str' ? v : key==='sound' ? v==='true' : Number(v);
       saveSettings(); syncOpts(); b.blur(); initAudio();
-      if(key==='dur'||key==='mode') restart();
+      if(key==='dur'||key==='mode'||key==='text') restart();
     });
   });
 });
@@ -664,6 +732,17 @@ let combo=0, maxCombo=0, streak=0, okKeys=0, allKeys=0, okChars=0, lineH=0;
 let secKeys=[], missMap={}; // 1秒ごとの正解打鍵の累計、キーごとのミス数
 const esc = c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c);
 const pick = () => WORD_LIST[Math.random()*WORD_LIST.length|0];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+let sentQueue=[];
+/* 出題モードごとに次の単語を返す（英文は文をシャッフルして順に流す） */
+function nextWord(){
+  if(settings.text==='sentence'){
+    if(!sentQueue.length) sentQueue=shuffle(SENTENCES).flatMap(x=>x.split(' '));
+    return sentQueue.shift();
+  }
+  let w=pick(); if(words.length && w===words[words.length-1]) w=pick();
+  return w;
+}
 
 function renderWord(i,input){
   const w=words[i]; let h='';
@@ -673,7 +752,7 @@ function renderWord(i,input){
 }
 function addWords(n){
   for(let i=0;i<n;i++){
-    let w=pick(); if(words.length && w===words[words.length-1]) w=pick();
+    const w=nextWord();
     words.push(w);
     const el=document.createElement('div'); el.className='word';
     wordEls.push(el); wordsEl.appendChild(el); renderWord(words.length-1,'');
@@ -706,7 +785,7 @@ function restart(){
   clearInterval(timerId); stopFever();
   feverTime=0; maxStage=0; gauge=0; score=0; shown=0; lastMult=0;
   shards.length=0; lines.length=0; chordIdx=0; noteIdx=0;
-  words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed='';
+  words=[]; wordEls=[]; wordsEl.innerHTML=''; wi=0; firstVis=0; typed=''; sentQueue=[];
   started=false; ended=false; combo=0; maxCombo=0; streak=0; okKeys=0; allKeys=0; okChars=0;
   secKeys=[]; missMap={};
   setTier(0);
@@ -775,7 +854,8 @@ function submitWord(){
 }
 /* ---------- records ---------- */
 const REC_KEY='typeburst-records', RANK_N=10, HIST_N=20;
-const CATS=[['normal',30],['normal',60],['hard',30],['hard',60]];
+const CATS=[['normal',30],['normal',60],['hard',30],['hard',60]], TEXTS=Object.keys(TEXT_NAME);
+const textOf = r => r.text||'words'; // 出題モード追加前の記録は英単語
 const MODE_NAME={normal:'ノーマル', hard:'ハード'};
 function loadRecords(){
   let d=null; try{ d=JSON.parse(localStorage.getItem(REC_KEY)); }catch(e){}
@@ -788,14 +868,14 @@ function loadRecords(){
   return d;
 }
 function saveRecords(d){ try{ localStorage.setItem(REC_KEY, JSON.stringify(d)); }catch(e){} }
-const ranking = (runs,mode,dur) => runs.filter(r=>r.mode===mode && r.dur===dur).sort((a,b)=>b.score-a.score || a.date-b.date).slice(0,RANK_N);
+const ranking = (runs,text,mode,dur) => runs.filter(r=>textOf(r)===text && r.mode===mode && r.dur===dur).sort((a,b)=>b.score-a.score || a.date-b.date).slice(0,RANK_N);
 function pruneRuns(runs){ // 各区分の上位10件と直近20件だけ残す
   const keep=new Set(runs.slice(-HIST_N));
-  CATS.forEach(([m,d])=>ranking(runs,m,d).forEach(r=>keep.add(r)));
+  TEXTS.forEach(t=>CATS.forEach(([m,d])=>ranking(runs,t,m,d).forEach(r=>keep.add(r))));
   return runs.filter(r=>keep.has(r));
 }
 function addRun(run){
-  const d=loadRecords(), prev=ranking(d.runs,run.mode,run.dur)[0];
+  const d=loadRecords(), prev=ranking(d.runs,run.text,run.mode,run.dur)[0];
   const best=prev?prev.score:0, isBest = run.score>best && run.score>0;
   d.runs.push(run); d.runs=pruneRuns(d.runs); saveRecords(d);
   return {isBest, best:Math.max(best,run.score)};
@@ -804,24 +884,25 @@ const fmtDate = t => { if(!t) return '-'; const d=new Date(t), p=n=>String(n).pa
   return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const dash = v => v==null ? '-' : v;
 
-let recView=null, recCat=0, lastRunDate=0;
+let recView=null, recCat=0, recText='words', lastRunDate=0;
 function renderRecords(){
   const runs=loadRecords().runs, [mode,dur]=CATS[recCat];
+  $('#recTextTabs').innerHTML=TEXTS.map(t=>`<button role="tab" data-t="${t}" class="${t===recText?'on':''}" aria-selected="${t===recText}">${TEXT_NAME[t]}</button>`).join('');
   $('#recTabs').innerHTML=CATS.map(([m,d],i)=>`<button role="tab" data-i="${i}" class="${i===recCat?'on':''}" aria-selected="${i===recCat}">${MODE_NAME[m]} ${d}秒</button>`).join('');
-  const rank=ranking(runs,mode,dur);
-  $('#recRank').innerHTML = rank.length ? '<table><tr><th>#</th><th>スコア</th><th>WPM</th><th>正確率</th><th>日付</th></tr>'+
-    rank.map((r,i)=>`<tr class="${r.date&&r.date===lastRunDate?'now':''}"><td>${i+1}</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td><td>${fmtDate(r.date)}</td></tr>`).join('')+'</table>'
+  const rank=ranking(runs,recText,mode,dur);
+  $('#recRank').innerHTML = rank.length ? '<table><tr><th>#</th><th>スコア</th><th>WPM</th><th class="acc">正確率</th><th>日付</th></tr>'+
+    rank.map((r,i)=>`<tr class="${r.date&&r.date===lastRunDate?'now':''}"><td>${i+1}</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td class="acc">${r.acc==null?'-':r.acc+'%'}</td><td>${fmtDate(r.date)}</td></tr>`).join('')+'</table>'
     : '<p class="empty">まだ記録がありません</p>';
   const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
-  $('#recHist').innerHTML = hist.length ? '<table><tr><th>日付</th><th>モード</th><th>スコア</th><th>WPM</th><th>正確率</th></tr>'+
-    hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${MODE_NAME[r.mode]} ${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td>${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
+  $('#recHist').innerHTML = hist.length ? '<table><tr><th>日付</th><th>モード</th><th>スコア</th><th>WPM</th><th class="acc">正確率</th></tr>'+
+    hist.map(r=>`<tr class="${r.date===lastRunDate?'now':''}"><td>${fmtDate(r.date)}</td><td>${TEXT_NAME[textOf(r)]}/${MODE_NAME[r.mode]}/${r.dur}秒</td><td class="sc">${r.score.toLocaleString()}</td><td>${dash(r.wpm)}</td><td class="acc">${r.acc==null?'-':r.acc+'%'}</td></tr>`).join('')+'</table>'
     : '<p class="empty">まだ記録がありません</p>';
 }
 const syncScroll = () => document.body.classList.toggle('scrollable', $('#game').hidden); // 結果・記録画面は縦スクロール可
 function openRecords(){
   if(started && !ended) restart(); // プレイ中に開いたらそのゲームは中断
   recView = ended ? '#result' : '#game';
-  recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur));
+  recCat = Math.max(0, CATS.findIndex(([m,d])=>m===settings.mode && d===settings.dur)); recText=settings.text;
   resetKb(); kb.blur();
   $('#game').hidden=true; $('#result').hidden=true; $('#records').hidden=false;
   renderRecords(); syncCover(); syncScroll();
@@ -830,6 +911,7 @@ function closeRecords(){
   if(!recView) return;
   $('#records').hidden=true; $(recView).hidden=false; recView=null; syncCover(); syncScroll();
 }
+$('#recTextTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recText=b.dataset.t; renderRecords(); });
 $('#recTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recCat=Number(b.dataset.i); renderRecords(); });
 $('#recBtn').addEventListener('click',e=>{ e.currentTarget.blur(); if(recView) closeRecords(); else openRecords(); });
 $('#recBtn2').addEventListener('click',openRecords);
@@ -854,7 +936,7 @@ function renderDetail(){
 let shareText='';
 function makeShareText(wpm,acc){
   const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
-  return `typeburst ${score.toLocaleString()}pts [${MODE_NAME[settings.mode]} ${settings.dur}秒] ${wpm}WPM 正確率${acc}% 最大${maxCombo}combo`+
+  return `typeburst ${score.toLocaleString()}pts [${TEXT_NAME[settings.text]} ${MODE_NAME[settings.mode]} ${settings.dur}秒] ${wpm}WPM 正確率${acc}% 最大${maxCombo}combo`+
     (maxStage?` ${STAGE_NAMES[maxStage]}`:'')+url;
 }
 function copyText(t){
@@ -877,7 +959,7 @@ function end(){
   const wpm=Math.round(okChars/5/(settings.dur/60));
   const acc=allKeys?Math.round(okKeys/allKeys*100):0;
   lastRunDate=Date.now();
-  const {isBest, best} = addRun({score, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
+  const {isBest, best} = addRun({score, text:settings.text, mode:settings.mode, dur:settings.dur, wpm, acc, combo:maxCombo,
     stage:maxStage, fever:Math.round(feverTime*10)/10, date:lastRunDate});
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
