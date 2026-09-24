@@ -79,8 +79,12 @@ body.fx0 .play.hardcore{animation:none}
   background:var(--bg2); padding:.7rem; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,.35); width:min(560px,92vw)}
 #themePanel button{display:flex; flex-direction:column; gap:.35rem; align-items:stretch; padding:.35rem; font-size:12px; border:2px solid transparent}
 #themePanel button.on{border-color:var(--accent); color:var(--text)}
-.pv{display:flex; align-items:flex-end; gap:3px; height:34px; padding:6px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
-.pv i{flex:1; border-radius:2px}
+.pv{display:flex; align-items:center; gap:8px; height:40px; padding:6px 8px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
+.pv svg{flex:none; display:block}
+.pv .bars{flex:1; display:flex; align-items:flex-end; gap:2px; height:100%}
+.pv .bars i{flex:1; border-radius:2px}
+.tsw{display:inline-grid; place-items:center; width:20px; height:20px; border-radius:5px; background:var(--bg); box-shadow:0 0 0 1px var(--dim)}
+.tsw svg{display:block}
 
 #game{display:flex; flex-direction:column; gap:.9rem}
 .hud{display:flex; align-items:baseline; flex-wrap:wrap; column-gap:1.4rem; row-gap:.2rem; font-size:clamp(20px,2.6vw,30px); min-height:1.5em}
@@ -255,7 +259,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       </div>
       <button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
       <div class="group meter" data-key="fx"><span>演出</span><button data-v="0" title="演出：弱" aria-label="演出：弱"><i class="bar"></i></button><button data-v="1" title="演出：中" aria-label="演出：中"><i class="bar"></i></button><button data-v="2" title="演出：強" aria-label="演出：強"><i class="bar"></i></button></div>
-      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <i class="sw" id="themeSw"></i></button>
+      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <span id="themeSw" class="tsw"></span></button>
       <button id="recBtn">記録</button>
       <button id="helpBtn" title="遊び方" aria-label="遊び方">?</button>
     </nav>
@@ -631,6 +635,21 @@ const THEMES={
   cyber: {name:'サイバー', bg:'#0b0716', bg2:'#170f2a', dim:'#5a4a80', text:'#e8e0ff', err:'#ff3860', hi:'#ffffff',
           tiers:['#00f0ff','#b44cff','#ff2bd6','#fcee0a','#39ff14']}
 };
+/* テーマごとのアイコン（24×24）。属性値の "C0"〜"C4" はテーマの tiers、"BG" は背景色に置き換える */
+const THEME_ICON={
+  night:'<path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="C0"/><circle cx="19" cy="5.5" r="1.4" fill="C1"/>',
+  mono:'<circle cx="12" cy="12" r="8" fill="none" stroke="C0" stroke-width="2.2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="C4"/>',
+  paper:'<path d="M6 3h8l4 4v14H6z" fill="none" stroke="C0" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="C1" stroke-width="2" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke="C2" stroke-width="2" stroke-linecap="round"/>',
+  cream:'<path d="M4.5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" fill="C0"/><path d="M15.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.5" fill="none" stroke="C0" stroke-width="2"/><path d="M8 3c0 1.6 1.6 1.6 1.6 3.4M12 3c0 1.6 1.6 1.6 1.6 3.4" fill="none" stroke="C1" stroke-width="1.8" stroke-linecap="round"/>',
+  ocean:'<path d="M2 9.5c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1" fill="none" stroke="C0" stroke-width="2.4" stroke-linecap="round"/><path d="M2 15.5c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1" fill="none" stroke="C1" stroke-width="2.4" stroke-linecap="round"/>',
+  forest:'<path d="M4.5 19.5C4.5 10.5 10.5 4 20 4c0 9.5-6.5 15.5-15.5 15.5z" fill="C0"/><path d="M5 19 14 10" stroke="BG" stroke-width="1.8" stroke-linecap="round"/>',
+  twilight:'<path d="M5 15a7 7 0 0 1 14 0z" fill="C3"/><path d="M2 15h20" stroke="C0" stroke-width="2" stroke-linecap="round"/><path d="M6 19h12" stroke="C1" stroke-width="2" stroke-linecap="round"/>',
+  sakura:[0,1,2,3,4].map(k=>`<ellipse cx="12" cy="6.6" rx="3.1" ry="4.5" fill="C0" transform="rotate(${k*72} 12 12)"/>`).join('')+'<circle cx="12" cy="12" r="2.2" fill="C3"/>',
+  ember:'<path d="M12 2c1 4 6.5 6 6.5 12a6.5 6.5 0 0 1-13 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1.5-9z" fill="C1"/><path d="M12 12c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="C4"/>',
+  cyber:'<path d="M13.5 2 4.5 14h7l-1 8 9-12h-7z" fill="C3" stroke="C0" stroke-width="1.3" stroke-linejoin="round"/>'
+};
+const themeIcon = (k,size) => { const t=THEMES[k];
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${THEME_ICON[k].replace(/"C([0-4])"/g,(_,i)=>`"${t.tiers[i]}"`).replace(/"BG"/g,`"${t.bg}"`)}</svg>`; };
 const THEME_ORDER=['night','mono','paper','cream','ocean','forest','twilight','sakura','ember','cyber'];
 if(!THEMES[settings.theme]) settings.theme='night';
 const TEXT_NAME={words:'英単語', sentence:'英文', roma:'ローマ字'};
@@ -658,14 +677,14 @@ function applyTheme(){
   root.style.setProperty('--crit',critC()); root.style.setProperty('--hi',t.hi);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.bg);
   $('#favicon').href='data:image/svg+xml,'+encodeURIComponent(faviconSVG(t));
-  $('#themeSw').style.background=`linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)`;
+  $('#themeSw').innerHTML=themeIcon(settings.theme,16);
   themePanel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings.theme));
   setTier(tier);
 }
 /* テーマ一覧パネル：ヘッダーのボタンで開閉 */
 const themePanel=$('#themePanel'), themeBtn=$('#themeBtn');
 themePanel.innerHTML=THEME_ORDER.map(k=>{ const t=THEMES[k];
-  return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span>${t.name}</button>`; }).join('');
+  return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${themeIcon(k,26)}<span class="bars">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span></span>${t.name}</button>`; }).join('');
 function setThemePanel(open){ themePanel.hidden=!open; themeBtn.setAttribute('aria-expanded',String(open)); }
 themeBtn.addEventListener('click',e=>{ e.stopPropagation(); themeBtn.blur(); setThemePanel(themePanel.hidden); });
 themePanel.addEventListener('click',e=>{ e.stopPropagation(); const b=e.target.closest('button'); if(!b) return;
