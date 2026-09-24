@@ -116,6 +116,12 @@ body.fever2 #glow{opacity:1}
 body.fever3 #glow{animation:hue 2s linear infinite}
 body.fever2:not(.fx0) .word span.ok, body.fever2:not(.fx0) #score{text-shadow:-2px 0 rgba(255,40,120,.55), 2px 0 rgba(40,220,255,.55)}
 body.fever3:not(.fx0) #words-wrap{animation:rgbjit .14s steps(2) infinite}
+body.fever4 #glow{animation:hue .9s linear infinite; opacity:1}
+body.fever5:not(.fx0) #words-wrap{animation:rgbjit2 .1s steps(2) infinite}
+body.fever5 #stageTag{font-size:.9em; letter-spacing:.06em}
+@keyframes rgbjit2{50%{filter:drop-shadow(-5px 0 rgba(255,0,100,.6)) drop-shadow(5px 0 rgba(0,220,255,.6))}}
+#vignette{position:fixed; inset:0; pointer-events:none; z-index:4; opacity:0;
+  background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.55) 100%)}
 @keyframes rgbjit{50%{filter:drop-shadow(-3px 0 rgba(255,0,100,.5)) drop-shadow(3px 0 rgba(0,220,255,.5))}}
 
 .hint{color:var(--dim); font-size:13px; display:flex; flex-wrap:wrap; align-items:center; gap:1.5rem; margin:0}
@@ -266,6 +272,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 </main></div>
 <canvas id="fx"></canvas>
 <div id="flash"></div>
+<div id="vignette"></div>
 
 <script>
 const WORD_LIST = ("the be of and a to in he have it that for they with as not on she at by this we you do but from or which one would all will there say who make when can more if no man out other so what time up go about than into could state only new year some take come these know see use get like then first any work now may such give over think most even find day also after way many must look before great back through long where much should well people down own just because good each those feel seem how high too place little world very still nation hand old life tell write become here show house both between need mean call develop under last right move thing general school never same another begin while number part turn real leave might want point form off child few small since against ask late home interest large person end open public follow during present without again hold around possible head consider word program problem however lead system set order eye plan run keep face fact group play stand increase early course change help line light sound water music night fire color river city story north south young ready above ever friend table dream quick bright").split(" ");
@@ -726,6 +733,12 @@ const sfx = {
     chordTones(57,84).forEach(m=>tone(mtof(m),'sawtooth',t,.5,.05,lp));
     if(st>=2) chordTones(72,100).slice(0,4).forEach((m,i)=>tone(mtof(m),'square',t+.08+i*.05,.12,.045,lp));
     if(st>=3){ tone(mtof(93),'sine',t,.8,.05,master,mtof(105)); noise(t+.3,.8,.12,'highpass',6000,.5); }
+    if(st>=4) tone(400,'sawtooth',t,.55,.06,lowpass(5000),1600); // 上昇音
+    if(st>=5){ // 重いサブベースと和音の突き刺し
+      tone(mtof(33),'sine',t,1.4,.7,master,mtof(24));
+      [0,.16,.32].forEach(d=>chordTones(64,88).forEach(m=>tone(mtof(m),'sawtooth',t+d,.12,.04,lp)));
+      noise(t,1.4,.2,'highpass',1800,.5,9000);
+    }
   },
   down(){ if(!canPlay()) return; const t=ac.currentTime;
     tone(420,'sawtooth',t,.5,.12,lowpass(1400),45);
@@ -769,9 +782,9 @@ function riserStop(){
 }
 
 /* ---------- gauge & fever stages ---------- */
-const STAGE_NAMES=['','fever','super fever','hyper fever'];
-const STAGE_MULT=[1,2,3,4], STAGE_BPM=[0,128,140,152];
-const GAIN_KEY=[1.6,1.5,1.4,1.3], GAIN_WORD=4, DRAIN=[0,3,4,5];
+const STAGE_NAMES=['','fever','super fever','hyper fever','ultra fever','LIMIT BREAK'], MAX_STAGE=5;
+const STAGE_MULT=[1,2,3,4,5,6], STAGE_BPM=[0,128,140,152,164,176];
+const GAIN_KEY=[1.6,1.5,1.4,1.3,1.2,1.1], GAIN_WORD=4, DRAIN=[0,3,4,5,6.5,8]; // 上の段階ほど貯まりにくく、減りやすい
 let gauge=0, fstage=0, maxStage=0, feverT0=0, feverTime=0, schedId=0, step=0, nextT=0, lastMult=1;
 const clock = () => ac ? ac.currentTime : performance.now()/1000;
 const bpm = () => STAGE_BPM[fstage]+Math.min(12,combo/20);
@@ -780,19 +793,19 @@ const multiplier = () => TIER_MULT[tier]*STAGE_MULT[fstage]*MODE_MULT[settings.m
 function addGauge(d){
   if(ended) return;
   gauge=Math.max(0,Math.min(100,gauge+d));
-  if(gauge>=100 && fstage<3) stageUp();
+  if(gauge>=100 && fstage<MAX_STAGE) stageUp();
   else if(gauge<=0 && fstage>0) stageDown();
   syncGauge();
 }
 function syncGauge(){
   gaugeFill.style.transform=`scaleX(${gauge/100})`;
-  const charged = gauge>=75 && fstage<3 && started && !ended;
+  const charged = gauge>=75 && fstage<MAX_STAGE && started && !ended;
   gaugeEl.classList.toggle('charged',charged);
   if(charged) riserUpdate((gauge-75)/25); else riserStop();
 }
 function setStageClass(){
   const b=document.body.classList;
-  b.toggle('fever',fstage>=1); b.toggle('fever2',fstage>=2); b.toggle('fever3',fstage>=3);
+  b.toggle('fever',fstage>=1); b.toggle('fever2',fstage>=2); b.toggle('fever3',fstage>=3); b.toggle('fever4',fstage>=4); b.toggle('fever5',fstage>=5);
   stageTag.textContent=STAGE_NAMES[fstage];
 }
 function updateMultUI(){
@@ -808,7 +821,7 @@ function camPunch(s){
 function stageUp(){
   const was=fstage; fstage++; maxStage=Math.max(maxStage,fstage);
   if(was===0){ feverT0=performance.now(); step=0; nextT=clock()+.08; clearInterval(schedId); schedId=setInterval(schedule,25); }
-  gauge = fstage<3 ? 35 : 100;
+  gauge = fstage<MAX_STAGE ? 35 : 100;
   riserStop(); sfx.drop(fstage); setStageClass(); updateMultUI();
   const m=mult(), [x,,r]=center(wrap), cy=r.top+r.height/2;
   floatText(x,r.top-16,STAGE_NAMES[fstage],fstage>=3?hi():accent(),34+fstage*8,true);
@@ -830,7 +843,6 @@ function stopFever(){
   if(fstage>0) feverTime+=(performance.now()-feverT0)/1000;
   fstage=0; clearInterval(schedId); riserStop(); setStageClass();
 }
-/* ハードモード：ミス1回でコンボ・フィーバー・ゲージ・コード進行をすべて最初に戻す */
 /* ハードコア：1回ミスでその時点で終了（少し間を置いて結果へ） */
 let runId=0;
 function failRun(){
@@ -843,6 +855,7 @@ function failRun(){
   shake=Math.max(shake,14*m); camPunch(.94);
   setTimeout(()=>{ if(rid===runId) end(at); },650);
 }
+/* ハードモード：ミス1回でコンボ・フィーバー・ゲージ・コード進行をすべて最初に戻す */
 function hardReset(){
   const lost = combo>0 || gauge>0 || fstage>0;
   if(fstage>0) sfx.down();
@@ -864,18 +877,28 @@ function playStep(s,t){
     if(s%4===2||s===15) tone(mtof(bassMidi()+12),'sawtooth',t,.14,.09,lowpass(900));
     if(fstage>=2 && s%2===0){ const tn=chordTones(76,96); tone(mtof(tn[(s/2)%tn.length]),'square',t,.1,.03,lowpass(2400)); }
     if(fstage>=3){ const tn=chordTones(88,108); tone(mtof(tn[(s*3)%tn.length]),'sine',t,.06,.02); }
+    if(fstage>=4){ // ultra：1オクターブ上のアルペジオとオープンハイハット
+      const tn=chordTones(76,100); tone(mtof(tn[(s*5)%tn.length]+12),'triangle',t,.07,.022);
+      if(s%4===2) noise(t,.22,.07,'highpass',6500,.6);
+    }
+    if(fstage>=5 && s%2===0){ // LIMIT BREAK：8分ごとの和音の突き刺し
+      const lp=lowpass(3200); chordTones(60,79).forEach(m=>tone(mtof(m),'sawtooth',t,.07,.028,lp));
+    }
   }
-  if(s%4===0) setTimeout(beatFx,Math.max(0,(t-clock())*1000));
+  if(s%4===0) setTimeout(()=>beatFx(s),Math.max(0,(t-clock())*1000));
 }
-function beatFx(){
+function beatFx(s){
   if(!fstage) return; const m=mult();
   glow.animate([{opacity:1},{opacity:.65}],{duration:300,easing:'ease-out'});
-  if(settings.fx>0) wrap.animate([{transform:`scale(${1+.01*fstage*m})`},{transform:'scale(1)'}],{duration:180,easing:'ease-out'});
-  if(fstage>=3) camPunch(1.008);
+  if(settings.fx>0) wrap.animate([{transform:`scale(${1+.01*Math.min(fstage,3)*m})`},{transform:'scale(1)'}],{duration:180,easing:'ease-out'});
+  if(fstage>=3) camPunch(fstage>=5?1.016:1.008);
+  if(fstage>=4 && settings.fx>0) vignette.animate([{opacity:Math.min(.9,.45*m)},{opacity:0}],{duration:420,easing:'ease-out'});
+  // LIMIT BREAK：小節の頭だけ軽くフラッシュ（176BPMで約0.7回/秒。3回/秒を超えない）
+  if(fstage>=5 && s===0 && settings.fx>0 && !reduced) flash.animate([{opacity:.1*Math.min(m,1.4)},{opacity:0}],{duration:260,easing:'ease-out'});
 }
 
 /* ---------- particles ---------- */
-const cv=$('#fx'), cx=cv.getContext('2d');
+const cv=$('#fx'), cx=cv.getContext('2d'), vignette=$('#vignette');
 let W=0,H=0;
 function resize(){ const dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight;
   cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); placeCaret(); }
@@ -918,7 +941,7 @@ function loop(){
   cx.globalCompositeOperation=theme().light?'source-over':'lighter'; cx.lineCap='round';
   // speed lines
   if(fstage>0){ const n=[1,2,4][settings.fx]*fstage;
-    for(let i=0;i<n;i++) lines.push({x:W+60,y:Math.random()*H,vx:-(18+Math.random()*26)*(1+fstage*.2),len:40+Math.random()*140}); }
+    for(let i=0;i<n && lines.length<600;i++) lines.push({x:W+60,y:Math.random()*H,vx:-(18+Math.random()*26)*(1+fstage*.2),len:40+Math.random()*140}); }
   cx.strokeStyle=accent(); cx.lineWidth=1.5;
   for(let i=lines.length-1;i>=0;i--){ const l=lines[i]; l.x+=l.vx;
     if(l.x+l.len<0){ lines.splice(i,1); continue; }
