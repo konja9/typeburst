@@ -33,7 +33,7 @@ body.scrollable{overflow-x:hidden; overflow-y:auto}
 
 #cam{width:min(960px,92vw); position:relative; z-index:2}
 #stage{display:flex; flex-direction:column; gap:3rem}
-header{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; font-size:14px; color:var(--dim)}
+header{position:relative; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; font-size:14px; color:var(--dim)}
 .brand{font-weight:800; font-size:20px; color:var(--text); letter-spacing:-.02em; display:flex; align-items:center; gap:.5rem}
 .brand::before{content:""; width:.55em; height:1em; background:var(--accent); border-radius:2px; box-shadow:0 0 10px var(--accent); transition:background .2s}
 .opts{display:flex; gap:1.25rem; background:var(--bg2); padding:.45rem .9rem; border-radius:10px; flex-wrap:wrap}
@@ -44,8 +44,13 @@ button:hover{color:var(--text)}
 button.on{color:var(--accent)}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .sw{display:inline-block; width:.85em; height:.85em; border-radius:50%; vertical-align:-.1em; border:2px solid var(--bg2); box-shadow:0 0 0 1px var(--dim)}
-.group[data-key="theme"] button{padding:.25rem .3rem}
-.group[data-key="theme"] button.on .sw{box-shadow:0 0 0 2px var(--text)}
+#themeBtn{display:inline-flex; align-items:center; gap:.4rem}
+#themePanel{position:absolute; top:calc(100% + .5rem); right:0; z-index:10; display:grid; grid-template-columns:repeat(5,1fr); gap:.5rem;
+  background:var(--bg2); padding:.7rem; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,.35); width:min(560px,92vw)}
+#themePanel button{display:flex; flex-direction:column; gap:.35rem; align-items:stretch; padding:.35rem; font-size:12px; border:2px solid transparent}
+#themePanel button.on{border-color:var(--accent); color:var(--text)}
+.pv{display:flex; align-items:flex-end; gap:3px; height:34px; padding:6px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
+.pv i{flex:1; border-radius:2px}
 
 #game{display:flex; flex-direction:column; gap:.9rem}
 .hud{display:flex; align-items:baseline; flex-wrap:wrap; column-gap:1.4rem; row-gap:.2rem; font-size:clamp(20px,2.6vw,30px); min-height:1.5em}
@@ -151,6 +156,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
   #stage{gap:1.4rem}
   header{font-size:13px}
   .opts{gap:.6rem; padding:.35rem .6rem}
+  #themePanel{grid-template-columns:repeat(2,1fr); left:0; right:0; width:auto}
   #words-wrap{font-size:22px}
   .hud{font-size:20px; column-gap:1rem}
   .big{font-size:64px}
@@ -172,9 +178,10 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
       <div class="group" data-key="dur"><button data-v="30">30秒</button><button data-v="60">60秒</button></div>
       <div class="group" data-key="sound"><button data-v="true">音あり</button><button data-v="false">音なし</button></div>
       <div class="group" data-key="fx"><span>演出</span><button data-v="0">弱</button><button data-v="1">中</button><button data-v="2">強</button></div>
-      <div class="group" data-key="theme" data-type="str"><span>テーマ</span></div>
+      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <i class="sw" id="themeSw"></i></button>
       <button id="recBtn">記録</button>
     </nav>
+    <div id="themePanel" role="dialog" aria-label="テーマ" hidden></div>
   </header>
 
   <section id="game">
@@ -256,8 +263,19 @@ const THEMES={
   ember: {name:'エンバー', bg:'#1f1818', bg2:'#2b2121', dim:'#6e5a58', text:'#f0e2de', err:'#ff4d5e', hi:'#fff6e0',
           tiers:['#ffb86b','#ff7a59','#ff4f8b','#c77dff','#fff27a']},
   ocean: {name:'オーシャン', bg:'#0e1829', bg2:'#15233a', dim:'#4d6485', text:'#d8e6f5', err:'#ff6680', hi:'#ffffff',
-          tiers:['#5ab8ff','#4de1d2','#8a8cff','#e36bff','#9dffe0']}
+          tiers:['#5ab8ff','#4de1d2','#8a8cff','#e36bff','#9dffe0']},
+  mono:  {name:'モノクロ', bg:'#161616', bg2:'#222222', dim:'#5c5c5c', text:'#e6e6e6', err:'#d06a6a', hi:'#ffffff',
+          tiers:['#8c8c8c','#adadad','#cfcfcf','#ececec','#ffffff']},
+  cream: {name:'クリーム', light:true, bg:'#f4efe4', bg2:'#e8e1d2', dim:'#a89f8c', text:'#3a3328', err:'#d23a3a', hi:'#3a3328',
+          tiers:['#c7661a','#b83280','#6a48f0','#0a8f8f','#2f9e44']},
+  twilight:{name:'トワイライト', bg:'#1c1830', bg2:'#26213f', dim:'#5f5885', text:'#e4e0f5', err:'#ff6680', hi:'#ffffff',
+          tiers:['#c3a6ff','#ff9ad5','#ff7a7a','#ffb35c','#ffe98a']},
+  sakura:{name:'サクラ', bg:'#221a1f', bg2:'#2e232a', dim:'#6f5a66', text:'#f5e6ec', err:'#ff5470', hi:'#ffffff',
+          tiers:['#ffb7c9','#ff8fb1','#d98bff','#ffd36b','#a8f0d0']},
+  cyber: {name:'サイバー', bg:'#0b0716', bg2:'#170f2a', dim:'#5a4a80', text:'#e8e0ff', err:'#ff3860', hi:'#ffffff',
+          tiers:['#00f0ff','#b44cff','#ff2bd6','#fcee0a','#39ff14']}
 };
+const THEME_ORDER=['night','mono','paper','cream','ocean','forest','twilight','sakura','ember','cyber'];
 if(!THEMES[settings.theme]) settings.theme='night';
 const MODE_MULT={normal:1, hard:1.5};
 if(!MODE_MULT[settings.mode]) settings.mode='normal';
@@ -268,15 +286,19 @@ function applyTheme(){
   ['bg','bg2','dim','text','err'].forEach(k=>root.style.setProperty('--'+k,t[k]));
   t.tiers.forEach((c,i)=>root.style.setProperty('--t'+i,c));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.bg);
+  $('#themeSw').style.background=`linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)`;
+  themePanel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings.theme));
   setTier(tier);
 }
-{ const g=document.querySelector('.group[data-key="theme"]');
-  Object.entries(THEMES).forEach(([k,t])=>{
-    const b=document.createElement('button'); b.dataset.v=k; b.title=t.name; b.setAttribute('aria-label','テーマ '+t.name);
-    b.innerHTML=`<i class="sw" style="background:linear-gradient(135deg,${t.bg} 50%,${t.tiers[0]} 50%)"></i>`;
-    g.appendChild(b);
-  });
-}
+/* テーマ一覧パネル：ヘッダーのボタンで開閉 */
+const themePanel=$('#themePanel'), themeBtn=$('#themeBtn');
+themePanel.innerHTML=THEME_ORDER.map(k=>{ const t=THEMES[k];
+  return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span>${t.name}</button>`; }).join('');
+function setThemePanel(open){ themePanel.hidden=!open; themeBtn.setAttribute('aria-expanded',String(open)); }
+themeBtn.addEventListener('click',e=>{ e.stopPropagation(); themeBtn.blur(); setThemePanel(themePanel.hidden); });
+themePanel.addEventListener('click',e=>{ e.stopPropagation(); const b=e.target.closest('button'); if(!b) return;
+  settings.theme=b.dataset.v; saveSettings(); applyTheme(); setThemePanel(false); b.blur(); });
+document.addEventListener('click',()=>{ if(!themePanel.hidden) setThemePanel(false); });
 
 document.querySelectorAll('.group').forEach(g=>{
   const key=g.dataset.key, type=g.dataset.type;
@@ -285,7 +307,6 @@ document.querySelectorAll('.group').forEach(g=>{
       const v=b.dataset.v;
       settings[key] = type==='str' ? v : key==='sound' ? v==='true' : Number(v);
       saveSettings(); syncOpts(); b.blur(); initAudio();
-      if(key==='theme') applyTheme();
       if(key==='dur'||key==='mode') restart();
     });
   });
@@ -893,6 +914,7 @@ function handleKey(k){
 
 /* 物理キーボード（入力欄にフォーカスがないとき） */
 document.addEventListener('keydown',e=>{
+  if(!themePanel.hidden){ e.preventDefault(); setThemePanel(false); return; } // パネル表示中の打鍵は閉じるだけ
   if(e.key==='Tab'){ e.preventDefault(); initAudio(); restart(); return; }
   if(recView){ if(e.key==='Escape'){ e.preventDefault(); closeRecords(); } return; }
   if(ended){ if(e.key==='Enter'){ e.preventDefault(); restart(); } return; }
