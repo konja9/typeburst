@@ -258,6 +258,12 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 .rrow.now,.hrow2.now{background:color-mix(in srgb, var(--accent) 10%, transparent)}
 .rrow.now .sc,.hrow2.now .sc{color:var(--accent)}
 .rec-list .empty{color:var(--dim); margin:.8rem 0}
+/* 小さめのノートPC（1024px前後）でもヘッダーを1行に収める */
+@media (max-width:1180px) and (min-width:701px){
+  .opts{gap:.55rem; padding:.4rem .65rem; font-size:13px}
+  #volRange{width:48px}
+  .brand{font-size:18px}
+}
 @media (max-width:700px){
   .help-body{grid-template-columns:1fr}
   .rrow{grid-template-columns:1.6em 5.4em minmax(30px,1fr) 3.8em 3.2em; gap:.45rem; font-size:13px}
