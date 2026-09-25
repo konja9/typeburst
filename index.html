@@ -1109,7 +1109,7 @@ const cv=$('#fx'), cx=cv.getContext('2d'), vignette=$('#vignette');
 let W=0,H=0;
 // 演出はぼかしのある光なので、高解像度の画面でも1倍で描く（2倍だと画素数が4倍になり重い）
 function resize(){ const dpr=1; W=innerWidth; H=innerHeight;
-  cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); placeCaret(); }
+  cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); fxDirty=true; placeCaret(); }
 addEventListener('resize',resize);
 const parts=[], rings=[], texts=[], lines=[], shards=[];
 let shake=0, score=0, shown=0, lastScorePop=0;
@@ -1144,10 +1144,14 @@ function arrive(s){
     scoreEl.animate([{transform:'scale(1.18)'},{transform:'scale(1)'}],{duration:120,easing:'ease-out'});
     spark(s.tx,s.ty,Math.round(4*mult()),s.color,3,1.4); }
 }
+let fxDirty=true; // キャンバスに何か残っているか
 function loop(){
+  const frozen = performance.now()<hitstopUntil; // ヒットストップ中は動きの計算を止め、描画だけ続ける
+  // 動いているものが何もないときは、キャンバスを一度消したら描画を省く
+  const busy = parts.length||rings.length||texts.length||shards.length||lines.length||fstage>0;
+  if(busy || fxDirty){
   cx.clearRect(0,0,W,H);
   cx.globalCompositeOperation=theme().light?'source-over':'lighter'; cx.lineCap='round';
-  const frozen = performance.now()<hitstopUntil; // ヒットストップ中は動きの計算を止め、描画だけ続ける
   // speed lines
   // 全部同じ色・透明度なので、1本のパスにまとめて1回で描く（1本ずつ描くと重い）
   if(fstage>0 && !frozen){ const n=Math.min(8,[1,2,4][settings.fx]*fstage);
@@ -1194,6 +1198,8 @@ function loop(){
     cx.font=`800 ${t.size*sc}px "JetBrains Mono", monospace`; cx.fillText(t.text,t.x,t.y);
   }
   cx.globalAlpha=1;
+  fxDirty=!!busy;
+  }
   // rolling score
   if(shown!==score){ checkBest(); shown+=(score-shown)*.25; if(Math.abs(score-shown)<1) shown=score; scoreEl.textContent=Math.round(shown).toLocaleString(); }
   if(frozen){} else if(shake>.3 && !reduced){
