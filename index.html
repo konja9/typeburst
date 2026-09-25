@@ -811,7 +811,7 @@ function initAudio(){
   musicShelf = ac.createBiquadFilter(); musicShelf.type='highshelf'; musicShelf.frequency.value=4500; musicShelf.gain.value=0; musicShelf.connect(musicLP);
   musicBus = ac.createGain(); musicBus.connect(musicShelf);
   // 残響：ノイズから響きのデータを作る（外部ファイルなし）。大きな場面の音だけ verbBus を通す
-  const len=Math.floor(ac.sampleRate*2.2), ir=ac.createBuffer(2,len,ac.sampleRate);
+  const len=Math.floor(ac.sampleRate*1.6), ir=ac.createBuffer(2,len,ac.sampleRate); // 残響は1.6秒（長いほど処理が重い）
   for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
   const conv=ac.createConvolver(); conv.buffer=ir; conv.connect(master);
   const send=ac.createGain(); send.gain.value=.32; send.connect(conv);
