@@ -686,8 +686,9 @@ const I18N={
   'r.newBest':'自己ベスト更新', 'r.fail':'ミスで終了（{n}秒）', 'again':'もう一度', 'r.viewRecords':'記録を見る',
   'r.restartKeys':'<kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開',
   'share':'シェア', 'share.copy':'コピー', 'share.x':'Xに投稿', 'share.native':'共有', 'share.copied':'コピーしました', 'share.copyFail':'コピーできませんでした',
-  'share.run':'今回の結果', 'share.best':'自己ベスト',
-  'share.head':'typeburst {label} {score}pts [{text} {mode} {dur}秒]', 'share.acc':'正確率{n}%', 'share.combo':'最大{n}combo',
+  'share.headRun':'typeburstで {score}点！', 'share.newBest':'（自己ベスト更新）', 'share.headBest':'typeburstの自己ベスト {score}点！',
+  'share.cond':'{text}・{mode}・{dur}秒', 'share.wpm':'｜{n} WPM', 'share.acc':'・正確率{n}%',
+  'share.combo':'最大{n}コンボ', 'share.stage':'{stage} 到達', 'share.failed':'{n}秒で終了', 'share.sep':'・',
   'close':'閉じる <kbd>Esc</kbd>',
   'rec.rank':'ランキング', 'rec.hist':'最近のプレイ', 'rec.f.text':'出題', 'rec.f.mode':'難易度', 'rec.f.dur':'時間',
   'rec.bestLabel':'自己ベスト', 'rec.none':'まだ記録がありません', 'rec.playThis':'{cat} で遊んでみよう',
@@ -728,8 +729,9 @@ const I18N={
   'r.newBest':'New personal best', 'r.fail':'Ended by a miss ({n}s)', 'again':'Play again', 'r.viewRecords':'View records',
   'r.restartKeys':'<kbd>Tab</kbd> or <kbd>Enter</kbd> to play again',
   'share':'Share', 'share.copy':'Copy', 'share.x':'Post to X', 'share.native':'Share', 'share.copied':'Copied', 'share.copyFail':'Could not copy',
-  'share.run':'my score', 'share.best':'personal best',
-  'share.head':'typeburst — {label}: {score} pts [{text} · {mode} · {dur}s]', 'share.acc':'{n}% accuracy', 'share.combo':'max combo {n}',
+  'share.headRun':'I scored {score} on typeburst!', 'share.newBest':' (new personal best)', 'share.headBest':'My typeburst personal best: {score}!',
+  'share.cond':'{text} · {mode} · {dur}s', 'share.wpm':' | {n} WPM', 'share.acc':' · {n}% accuracy',
+  'share.combo':'Max combo {n}', 'share.stage':'reached {stage}', 'share.failed':'ended at {n}s', 'share.sep':' · ',
   'close':'Close <kbd>Esc</kbd>',
   'rec.rank':'Ranking', 'rec.hist':'Recent plays', 'rec.f.text':'Text', 'rec.f.mode':'Difficulty', 'rec.f.dur':'Time',
   'rec.bestLabel':'Personal best', 'rec.none':'No records yet', 'rec.playThis':'Play {cat} to set one',
@@ -1641,7 +1643,7 @@ function renderRecords(){
   if(top){
     const st=[[top.wpm,'WPM'],[top.acc!=null?top.acc+'%':null,t('r.acc')],[top.combo,t('r.combo')],[top.stage?STAGE_NAMES[top.stage]:null,t('r.stage')]]
       .filter(([v])=>v!=null).map(([v,l])=>`<span><b>${v}</b>${l}</span>`).join('');
-    cardShareText=runShareText(top,t('share.best'));
+    cardShareText=runShareText(top,'best');
     $('#bestCard').innerHTML=`<div class="bc-share"><button data-sh="copy" data-i18n="share.copy">${t('share.copy')}</button><button data-sh="x" data-i18n="share.x">${t('share.x')}</button>${navigator.share?`<button data-sh="native" data-i18n="share.native">${t('share.native')}</button>`:''}</div>
       <div class="bc-label"><b>${t('rec.bestLabel')}</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
       <div class="bc-score">${top.score.toLocaleString()}<small>pts</small></div>
@@ -1749,18 +1751,25 @@ function fillDetailText(){
   $('#rPeak').textContent=t('r.peak',{n:lastDetail.peak}); $('#rDur').textContent=t('sec',{n:lastDetail.n}); $('#rZero').textContent=t('sec',{n:0});
   if(!lastRes) return;
   $('#rFever').textContent=t('sec',{n:lastRes.fever}); $('#rFail').textContent=lastRes.failedAt?t('r.fail',{n:lastRes.failedAt.toFixed(1)}):'';
-  shareText=runShareText(lastRes.run,t('share.run'));
+  shareText=runShareText(lastRes.run,'run',{isBest:lastRes.isBest,failedAt:lastRes.failedAt});
 }
 
 /* 結果のシェア */
 let shareText='';
 /* 記録1件からシェア用の文を作る。古い記録でない項目は省く */
-function runShareText(r,label){
-  const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
-  const p=[t('share.head',{label,score:r.score.toLocaleString(),text:textName(textOf(r)),mode:modeName(r.mode),dur:r.dur})];
-  if(r.wpm!=null) p.push(r.wpm+'WPM'); if(r.acc!=null) p.push(t('share.acc',{n:r.acc}));
-  if(r.combo!=null) p.push(t('share.combo',{n:r.combo})); if(r.stage) p.push(STAGE_NAMES[r.stage]);
-  return p.join(' ')+url;
+/* 記録1件からシェア用の文を作る（改行で行を分け、#typeburst を付ける）。
+   kind: 'run'＝結果画面（extra: {isBest, failedAt}）／'best'＝記録画面の自己ベストのカード。古い記録でない項目は省く */
+function runShareText(r,kind,extra={}){
+  const url = location.protocol.startsWith('http') ? location.origin+location.pathname : '';
+  const score=r.score.toLocaleString(), lines=[];
+  lines.push(kind==='best' ? t('share.headBest',{score}) : t('share.headRun',{score})+(extra.isBest?t('share.newBest'):''));
+  lines.push(t('share.cond',{text:textName(textOf(r)),mode:modeName(r.mode),dur:r.dur})+(r.wpm!=null?t('share.wpm',{n:r.wpm}):'')+(r.acc!=null?t('share.acc',{n:r.acc}):''));
+  const hype=[];
+  if(r.combo!=null) hype.push(t('share.combo',{n:r.combo})); if(r.stage) hype.push(t('share.stage',{stage:STAGE_NAMES[r.stage]}));
+  if(extra.failedAt) hype.push(t('share.failed',{n:extra.failedAt.toFixed(1)}));
+  if(hype.length) lines.push(hype.join(t('share.sep')));
+  lines.push('#typeburst'); if(url) lines.push(url);
+  return lines.join('\n');
 }
 function copyText(t){
   if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
@@ -1796,7 +1805,7 @@ function end(failedAt){ // failedAt: ハードコアでミスした時点の経�
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
   $('#rCrit').textContent=critN; $('#rBest').textContent=best.toLocaleString();
-  lastRes={run,failedAt,fever:feverTime.toFixed(1)}; renderDetail(T);
+  lastRes={run,failedAt,isBest,fever:feverTime.toFixed(1)}; renderDetail(T);
   $('#rFail').hidden=!failedAt;
   $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
