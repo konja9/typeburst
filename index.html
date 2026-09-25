@@ -46,7 +46,7 @@ body.scrollable{overflow-x:hidden; overflow-y:auto}
 #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:5}
 #flash{position:fixed; inset:0; background:var(--accent); opacity:0; pointer-events:none; z-index:6}
 
-#cam{width:min(1000px,92vw); position:relative; z-index:2}
+#cam{width:min(1060px,92vw); position:relative; z-index:2}
 #stage{display:flex; flex-direction:column; gap:3rem}
 header{position:relative; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; font-size:14px; color:var(--dim)}
 .brand{font-weight:800; font-size:20px; color:var(--text); letter-spacing:-.02em; display:flex; align-items:center; gap:.5rem}
@@ -76,6 +76,8 @@ body.fx0 .play.hardcore{animation:none}
 .meter:hover button:not(.lit) .bar{background:var(--text); opacity:.6}
 .meter button:hover ~ button:not(.lit) .bar{background:var(--dim); opacity:.4}
 .meter button:hover ~ button.lit .bar{opacity:.35; box-shadow:none}
+#langBtn{display:inline-flex; align-items:center; gap:.3rem; font-weight:600; letter-spacing:.04em; color:var(--text)}
+#langBtn:hover{color:var(--accent)}
 #soundBtn .x{display:none}
 .vol{display:inline-flex; align-items:center; gap:.1rem}
 #volRange{width:58px; accent-color:var(--accent); cursor:pointer}
@@ -212,7 +214,6 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 #helpBtn{width:1.6em; height:1.6em; padding:0; border:1.5px solid currentColor; border-radius:50%; font-weight:800; line-height:1; display:inline-grid; place-items:center}
 .help-body{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.4rem 2.4rem; font-size:14px; line-height:1.6}
 .help-body section{min-width:0}
-.lang-seg{align-self:flex-start; font-size:14px}
 .help-body h3{margin:0 0 .5rem; font-size:15px; color:var(--accent)}
 .help-body p{margin:.3rem 0; color:var(--dim)}
 .help-body p b{color:var(--text); font-weight:600}
@@ -264,6 +265,7 @@ html[lang="en"] .opts{font-size:13px; gap:.7rem}
 @media (max-width:1180px) and (min-width:701px){ html[lang="en"] .opts{font-size:12px; gap:.45rem; padding:.4rem .55rem} html[lang="en"] #volRange{width:42px} }
 /* 小さめのノートPC（1024px前後）でもヘッダーを1行に収める */
 @media (max-width:1180px) and (min-width:701px){
+  #cam{width:min(1060px,96vw)}
   .opts{gap:.55rem; padding:.4rem .65rem; font-size:13px}
   #volRange{width:48px}
   .brand{font-size:18px}
@@ -311,6 +313,7 @@ html[lang="en"] .opts{font-size:13px; gap:.7rem}
       <button id="themeBtn" aria-expanded="false" aria-controls="themePanel"><span data-i18n="theme">テーマ</span> <span id="themeSw" class="tsw"></span></button>
       <button id="recBtn" data-i18n="records">記録</button>
       <button id="helpBtn" title="遊び方" aria-label="遊び方" data-i18n-title="help" data-i18n-aria="help">?</button>
+      <button id="langBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9M12 3C9.4 5.6 8.2 8.6 8.2 12s1.2 6.4 3.8 9"/></svg><span id="langCode">JA</span></button>
     </nav>
     <div id="themePanel" role="dialog" aria-label="テーマ" data-i18n-aria="theme" hidden></div>
     <div id="ruleCard" role="dialog" aria-live="polite" hidden><b></b><p></p><button id="ruleOk">OK</button></div>
@@ -360,7 +363,6 @@ html[lang="en"] .opts{font-size:13px; gap:.7rem}
 
   <section id="help" hidden>
     <div class="rec-head"><h2 data-i18n="help">遊び方</h2><button id="helpClose" data-i18n="close">閉じる <kbd>Esc</kbd></button></div>
-    <div class="seg lang-seg" id="langSeg"><span data-i18n="lang">言語</span><button data-v="ja" lang="ja">日本語</button><button data-v="en" lang="en">English</button></div>
     <div class="help-body" id="helpBody"></div>
   </section>
 
@@ -1696,11 +1698,14 @@ function setLang(l){
   tapcover.textContent = t(isRoma() ? 'tap.roma' : 'tap');
   if(!$('#ruleCard').hidden) showRuleCardText(settings.mode);
   if(view==='#help') renderHelp(); if(view==='#records') renderRecords();
-  syncLangSeg();
+  syncLangBtn();
 }
-const syncLangSeg = () => document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===LANG));
-$('#langSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b){ b.blur(); setLang(b.dataset.v); } });
-syncLangSeg();
+/* ヘッダー右端の地球ボタン：押すたびに JA⇄EN。説明はどちらの言語でも読めるよう両方で書く */
+const LANG_NAME={ja:'日本語', en:'English'};
+function syncLangBtn(){ const b=$('#langBtn'); $('#langCode').textContent=LANG.toUpperCase();
+  b.title=b.ariaLabel=`Language / 言語: ${LANG_NAME[LANG]}`; }
+$('#langBtn').addEventListener('click',e=>{ e.currentTarget.blur(); setLang(LANG==='ja'?'en':'ja'); });
+syncLangBtn();
 /* 記録・遊び方などの画面の開閉。閉じると、開く前の画面（ゲームか結果）に戻る */
 let view=null, viewFrom=null;
 function openView(id,render){
