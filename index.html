@@ -783,7 +783,7 @@ const hi = () => theme().hi, errC = () => theme().err, critC = () => theme().lig
 function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.style.setProperty('--glow',hexRgb(accent())); }
 
 /* ---------- audio core ---------- */
-let ac=null, master=null, noiseBuf=null;
+let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
 function initAudio(){
   if(ac){ if(ac.state==='suspended') ac.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
@@ -791,6 +791,10 @@ function initAudio(){
   const comp = ac.createDynamicsCompressor();
   master = ac.createGain(); master.gain.value = .6;
   master.connect(comp); comp.connect(ac.destination);
+  // フィーバーの曲用の経路：キックに合わせて音量を下げ（うねり）、ミスでこもらせる
+  musicLP = ac.createBiquadFilter(); musicLP.type='lowpass'; musicLP.frequency.value=18000; musicLP.Q.value=.7; musicLP.connect(master);
+  musicBus = ac.createGain(); musicBus.connect(musicLP);
+  route = master;
   noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
 }
@@ -800,7 +804,7 @@ function env(g,t,a,peak,dur){
   g.gain.exponentialRampToValueAtTime(peak,t+a);
   g.gain.exponentialRampToValueAtTime(.0001,t+a+dur);
 }
-function tone(freq,type,t,dur,peak,dest=master,glideTo){
+function tone(freq,type,t,dur,peak,dest=route,glideTo){
   const o=ac.createOscillator(), g=ac.createGain();
   o.type=type; o.frequency.setValueAtTime(freq,t);
   if(glideTo) o.frequency.exponentialRampToValueAtTime(glideTo,t+dur);
@@ -812,9 +816,14 @@ function noise(t,dur,peak,type,freq,q=1,sweepTo){
   const f=ac.createBiquadFilter(); f.type=type; f.frequency.setValueAtTime(freq,t); f.Q.value=q;
   if(sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo,t+dur);
   const g=ac.createGain(); env(g,t,.003,peak,dur);
-  s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.05);
+  s.connect(f); f.connect(g); g.connect(route); s.start(t); s.stop(t+dur+.05);
 }
-function lowpass(freq){ const f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq; f.connect(master); return f; }
+function lowpass(freq){ const f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq; f.connect(route); return f; }
+/* ミスしたとき、フィーバーの曲をこもらせて1秒ほどで戻す */
+function muffle(){
+  if(!ac || !musicLP) return; const t=ac.currentTime, f=musicLP.frequency;
+  f.cancelScheduledValues(t); f.setValueAtTime(550,t); f.exponentialRampToValueAtTime(18000,t+1.1);
+}
 
 /* ---------- music ---------- */
 const mtof = m => 440*Math.pow(2,(m-69)/12);
@@ -1032,7 +1041,11 @@ function schedule(){ while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=6
 function playStep(s,t){
   if(s===0 && step>0) chordIdx++;
   if(canPlay()){
-    if(s%4===0 || (fstage>=3 && (s===10||s===14))) tone(150,'sine',t,.2,.55,master,42);
+    if(s%4===0 || (fstage>=3 && (s===10||s===14))) tone(150,'sine',t,.2,.55,master,42); // キックは曲の経路を通さない
+    if(s%4===0){ // サイドチェイン：キックの瞬間に曲の音量を下げて戻す。上の段階ほど深く
+      const d=Math.min(.6,.3+.06*fstage), gn=musicBus.gain; gn.cancelScheduledValues(t); gn.setValueAtTime(1-d,t); gn.linearRampToValueAtTime(1,t+.22);
+    }
+    route=musicBus;
     if(s%4===2) noise(t,fstage>=2?.1:.035,.12,'highpass',8000);
     else if(s%2===1) noise(t,.02,.04,'highpass',9000);
     if(s===4||s===12) noise(t,.12,.22,'bandpass',1600,.8);
@@ -1046,6 +1059,7 @@ function playStep(s,t){
     if(fstage>=5 && s%2===0){ // LIMIT BREAK：8分ごとの和音の突き刺し
       const lp=lowpass(3200); chordTones(60,79).forEach(m=>tone(mtof(m),'sawtooth',t,.07,.028,lp));
     }
+    route=master;
   }
   if(s%4===0) setTimeout(()=>beatFx(s),Math.max(0,(t-clock())*1000));
 }
@@ -1402,7 +1416,7 @@ function onChar(ch){
   } else {
     if(idx<w.length) missMap[w[idx]]=(missMap[w[idx]]||0)+1;
     if(crit[wi]){ crit[wi]=false; wordEls[wi].classList.remove('crit'); } // ミスすると金色は消える
-    fxMiss(span); sfx.miss();
+    fxMiss(span); sfx.miss(); muffle();
     if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { comboDown(); addGauge(-12); }
   }
   updateCombo(true);
@@ -1416,7 +1430,7 @@ function submitWord(){
     else { fxWord(el,P); sfx.word(streak); }
     addGauge(GAIN_WORD);
   } else {
-    el.classList.add('wrong'); sfx.miss();
+    el.classList.add('wrong'); sfx.miss(); muffle();
     if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { comboDown(); addGauge(-8); }
     updateCombo(false);
   }
