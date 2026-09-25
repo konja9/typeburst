@@ -826,14 +826,21 @@ function chordTones(lo,hi){ const c=chord(), out=[];
   for(let m=lo;m<=hi;m++){ if(c.q.includes(((m-c.r)%12+12)%12)) out.push(m); } return out; }
 const bassMidi = () => 33+((chord().r-9+12)%12);
 let lastPling=0, plingN=0;
+/* フィーバー中、打鍵のメロディを曲の32分音符の区切りに合わせる（遅れは最大で32分音符1つ分、BPM128で約59ms） */
+function quantT(t){
+  if(!fstage || !schedId) return t;
+  const g=60/bpm()/8, q=nextT-Math.floor((nextT-t)/g)*g;
+  return q<t ? t : q;
+}
 const sfx = {
   key(){ if(!canPlay()) return; const t=ac.currentTime;
     noise(t,.03,.14,'bandpass',3500+tier*400,1.4);
     tone(160,'sine',t,.04,.08,master,90);
     const tones=chordTones(64+tier*2,92);
     const i=Math.min(ARP[noteIdx%8]+(Math.floor(noteIdx/8)%2),tones.length-1), m=tones[i], f=mtof(m);
-    tone(f,'triangle',t,.2,.13); tone(f*2,'sine',t,.1,.03);
-    if(tier>=2 && i>0) tone(mtof(tones[i-1]),'sine',t,.24,.045);
+    const tm=quantT(t); // メロディはフィーバー中だけビートの区切りに合わせる（カチッという音は即時）
+    tone(f,'triangle',tm,.2,.13); tone(f*2,'sine',tm,.1,.03);
+    if(tier>=2 && i>0) tone(mtof(tones[i-1]),'sine',tm,.24,.045);
     if(tier>=1 && !fstage && noteIdx%4===0) tone(mtof(bassMidi()+12),'triangle',t,.32,.15);
   },
   word(streak){ if(!canPlay()) return; const t=ac.currentTime;
