@@ -783,7 +783,7 @@ const hi = () => theme().hi, errC = () => theme().err, critC = () => theme().lig
 function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.style.setProperty('--glow',hexRgb(accent())); }
 
 /* ---------- audio core ---------- */
-let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
+let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, verbBus=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
 function initAudio(){
   if(ac){ if(ac.state==='suspended') ac.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
@@ -794,6 +794,12 @@ function initAudio(){
   // フィーバーの曲用の経路：キックに合わせて音量を下げ（うねり）、ミスでこもらせる
   musicLP = ac.createBiquadFilter(); musicLP.type='lowpass'; musicLP.frequency.value=18000; musicLP.Q.value=.7; musicLP.connect(master);
   musicBus = ac.createGain(); musicBus.connect(musicLP);
+  // 残響：ノイズから響きのデータを作る（外部ファイルなし）。大きな場面の音だけ verbBus を通す
+  const len=Math.floor(ac.sampleRate*2.2), ir=ac.createBuffer(2,len,ac.sampleRate);
+  for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
+  const conv=ac.createConvolver(); conv.buffer=ir; conv.connect(master);
+  const send=ac.createGain(); send.gain.value=.32; send.connect(conv);
+  verbBus = ac.createGain(); verbBus.connect(master); verbBus.connect(send);
   route = master;
   noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
@@ -853,8 +859,10 @@ const sfx = {
     if(tier>=1 && !fstage && noteIdx%4===0) tone(mtof(bassMidi()+12),'triangle',t,.32,.15);
   },
   word(streak){ if(!canPlay()) return; const t=ac.currentTime;
-    const tones=chordTones(72,100), f=mtof(tones[Math.min(streak-1,tones.length-1)]);
+    // 連続正解で音程が上がる。和音の音を上まで使い切ったら下に戻り、高い倍音を1段ずつ重ねて「上がり続ける」ように聞かせる
+    const tones=chordTones(72,100), n=Math.max(0,streak-1), f=mtof(tones[n%tones.length]), lap=Math.min(3,Math.floor(n/tones.length));
     tone(f,'triangle',t,.2,.16); tone(f*2,'sine',t+.01,.14,.05); tone(f*3,'sine',t+.035,.09,.025);
+    for(let k=1;k<=lap;k++) tone(f*Math.pow(2,k+1),'sine',t+.02*k,.12,.022/k);
     noise(t,.08,.05,'highpass',6000);
   },
   pling(){ if(!canPlay()) return; const now=performance.now(); if(now-lastPling<35) return; lastPling=now;
@@ -903,6 +911,10 @@ const sfx = {
     if(best) [1568,2093,2637,3136].forEach((f,i)=>tone(f,'sine',t+.5+i*.07,.3,.05));
   }
 };
+
+/* 大きな場面の音には残響をかける */
+['tier','drop','crit','record','fanfare'].forEach(k=>{ const f=sfx[k];
+  sfx[k]=(...a)=>{ if(!verbBus) return f(...a); const p=route; route=verbBus; try{ f(...a); } finally{ route=p; } }; });
 
 /* 満タン直前のせり上がり音（ゲージ量に追従） */
 let riser=null;
