@@ -1107,7 +1107,8 @@ function beatFx(s){
 /* ---------- particles ---------- */
 const cv=$('#fx'), cx=cv.getContext('2d'), vignette=$('#vignette');
 let W=0,H=0;
-function resize(){ const dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight;
+// 演出はぼかしのある光なので、高解像度の画面でも1倍で描く（2倍だと画素数が4倍になり重い）
+function resize(){ const dpr=1; W=innerWidth; H=innerHeight;
   cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); placeCaret(); }
 addEventListener('resize',resize);
 const parts=[], rings=[], texts=[], lines=[], shards=[];
