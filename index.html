@@ -1148,12 +1148,16 @@ function loop(){
   cx.globalCompositeOperation=theme().light?'source-over':'lighter'; cx.lineCap='round';
   const frozen = performance.now()<hitstopUntil; // ヒットストップ中は動きの計算を止め、描画だけ続ける
   // speed lines
-  if(fstage>0 && !frozen){ const n=[1,2,4][settings.fx]*fstage;
-    for(let i=0;i<n && lines.length<600;i++) lines.push({x:W+60,y:Math.random()*H,vx:-(18+Math.random()*26)*(1+fstage*.2),len:40+Math.random()*140}); }
-  cx.strokeStyle=accent(); cx.lineWidth=1.5;
-  for(let i=lines.length-1;i>=0;i--){ const l=lines[i]; if(!frozen) l.x+=l.vx;
-    if(l.x+l.len<0){ lines.splice(i,1); continue; }
-    cx.globalAlpha=fstage?.22+fstage*.04:.1; cx.beginPath(); cx.moveTo(l.x,l.y); cx.lineTo(l.x+l.len,l.y); cx.stroke(); }
+  // 全部同じ色・透明度なので、1本のパスにまとめて1回で描く（1本ずつ描くと重い）
+  if(fstage>0 && !frozen){ const n=Math.min(8,[1,2,4][settings.fx]*fstage);
+    for(let i=0;i<n && lines.length<240;i++) lines.push({x:W+60,y:Math.random()*H,vx:-(18+Math.random()*26)*(1+fstage*.2),len:40+Math.random()*140}); }
+  if(lines.length){
+    cx.strokeStyle=accent(); cx.lineWidth=1.6; cx.globalAlpha=fstage?.26+fstage*.045:.1; cx.beginPath();
+    for(let i=lines.length-1;i>=0;i--){ const l=lines[i]; if(!frozen) l.x+=l.vx;
+      if(l.x+l.len<0){ lines.splice(i,1); continue; }
+      cx.moveTo(l.x,l.y); cx.lineTo(l.x+l.len,l.y); }
+    cx.stroke();
+  }
   // sparks
   for(let i=parts.length-1;i>=0;i--){ const p=parts[i];
     if(!frozen){ p.vx*=.93; p.vy=p.vy*.93+.12; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay; }
