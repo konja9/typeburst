@@ -292,23 +292,23 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
 <div id="cam"><main id="stage">
   <header>
     <div class="brand">typeburst</div>
-    <nav class="opts" aria-label="設定">
-      <div class="group" data-key="text" data-type="str"><button data-v="words">英単語</button><button data-v="sentence">英文</button><button data-v="roma">ローマ字</button></div>
+    <nav class="opts" data-i18n-aria="nav.settings" aria-label="設定">
+      <div class="group" data-key="text" data-type="str"><button data-v="words" data-i18n="text.words">英単語</button><button data-v="sentence" data-i18n="text.sentence">英文</button><button data-v="roma" data-i18n="text.roma">ローマ字</button></div>
       <div class="play" id="playBox">
-        <div class="group" data-key="dur"><button data-v="30" title="30秒">30s</button><button data-v="60" title="60秒">60s</button></div>
+        <div class="group" data-key="dur"><button data-v="30" title="30秒" data-i18n-title="dur.30">30s</button><button data-v="60" title="60秒" data-i18n-title="dur.60">60s</button></div>
         <i class="sep"></i>
         <div class="group" data-key="mode" data-type="str" data-toggle="normal">
-          <button data-v="hard" title="ハード：ミスで盛り上がりがリセット／スコア×1.5" aria-label="ハード（スコア×1.5）"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×1.5</small></button>
-          <button data-v="hardcore" title="ハードコア：1回ミスで終了／スコア×2" aria-label="ハードコア（スコア×2）"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×2</small></button>
+          <button data-v="hard" aria-label="ハード（スコア×1.5）" data-i18n-aria="mode.hard.aria"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×1.5</small></button>
+          <button data-v="hardcore" aria-label="ハードコア（スコア×2）" data-i18n-aria="mode.hardcore.aria"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×2</small></button>
         </div>
       </div>
-      <span class="vol"><button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><input id="volRange" type="range" min="0" max="100" step="5" aria-label="音量" title="音量"></span>
-      <div class="group meter" data-key="fx"><span>演出</span><button data-v="0" title="演出：弱" aria-label="演出：弱"><i class="bar"></i></button><button data-v="1" title="演出：中" aria-label="演出：中"><i class="bar"></i></button><button data-v="2" title="演出：強" aria-label="演出：強"><i class="bar"></i></button></div>
-      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <span id="themeSw" class="tsw"></span></button>
-      <button id="recBtn">記録</button>
-      <button id="helpBtn" title="遊び方" aria-label="遊び方">?</button>
+      <span class="vol"><button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><input id="volRange" type="range" min="0" max="100" step="5" aria-label="音量" title="音量" data-i18n-aria="vol" data-i18n-title="vol"></span>
+      <div class="group meter" data-key="fx"><span data-i18n="fx">演出</span><button data-v="0" title="演出：弱" aria-label="演出：弱" data-i18n-title="fx.0" data-i18n-aria="fx.0"><i class="bar"></i></button><button data-v="1" title="演出：中" aria-label="演出：中" data-i18n-title="fx.1" data-i18n-aria="fx.1"><i class="bar"></i></button><button data-v="2" title="演出：強" aria-label="演出：強" data-i18n-title="fx.2" data-i18n-aria="fx.2"><i class="bar"></i></button></div>
+      <button id="themeBtn" aria-expanded="false" aria-controls="themePanel"><span data-i18n="theme">テーマ</span> <span id="themeSw" class="tsw"></span></button>
+      <button id="recBtn" data-i18n="records">記録</button>
+      <button id="helpBtn" title="遊び方" aria-label="遊び方" data-i18n-title="help" data-i18n-aria="help">?</button>
     </nav>
-    <div id="themePanel" role="dialog" aria-label="テーマ" hidden></div>
+    <div id="themePanel" role="dialog" aria-label="テーマ" data-i18n-aria="theme" hidden></div>
     <div id="ruleCard" role="dialog" aria-live="polite" hidden><b></b><p></p><button id="ruleOk">OK</button></div>
   </header>
 
@@ -324,46 +324,46 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
     <div id="gauge" aria-hidden="true"><i></i></div>
     <div id="reading" hidden aria-live="polite"><div class="rt"></div><div class="rk"></div></div>
     <div id="words-wrap">
-      <input id="kb" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="タイピング入力">
+      <input id="kb" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="タイピング入力" data-i18n-aria="kb">
       <div id="words"></div><div id="caret" class="idle"></div>
       <div id="tapcover" hidden>タップしてキーボードを出す</div>
     </div>
-    <p class="hint" id="hint"><span>文字を打つとスタート</span><span id="ruleHint"></span><span>ゲージ満タンでフィーバー</span><span><kbd>Tab</kbd> でやり直し</span><button id="restartBtn">やり直す</button></p>
+    <p class="hint" id="hint"><span data-i18n="hint.start">文字を打つとスタート</span><span id="ruleHint"></span><span data-i18n="hint.fever">ゲージ満タンでフィーバー</span><span data-i18n="hint.tab"><kbd>Tab</kbd> でやり直し</span><button id="restartBtn" data-i18n="restart">やり直す</button></p>
   </section>
 
   <section id="result" hidden>
     <div class="big"><span id="rScore">0</span><small>pts</small></div>
     <div class="stats">
       <div><span>WPM</span><b id="rWpm">0</b></div>
-      <div><span>正確率</span><b id="rAcc">0%</b></div>
-      <div><span>最大コンボ</span><b id="rCombo">0</b></div>
-      <div><span>最高ステージ</span><b id="rStage">-</b></div>
-      <div><span>フィーバー</span><b id="rFever">0秒</b></div>
+      <div><span data-i18n="r.acc">正確率</span><b id="rAcc">0%</b></div>
+      <div><span data-i18n="r.combo">最大コンボ</span><b id="rCombo">0</b></div>
+      <div><span data-i18n="r.stage">最高ステージ</span><b id="rStage">-</b></div>
+      <div><span data-i18n="r.fever">フィーバー</span><b id="rFever">0秒</b></div>
       <div><span>CRITICAL</span><b id="rCrit">0</b></div>
-      <div><span>自己ベスト</span><b id="rBest">0</b></div>
+      <div><span data-i18n="r.best">自己ベスト</span><b id="rBest">0</b></div>
     </div>
     <div class="detail">
-      <div><div class="chart-head"><span>WPMの推移</span><span id="rPeak"></span></div>
+      <div><div class="chart-head"><span data-i18n="r.wpmChart">WPMの推移</span><span id="rPeak"></span></div>
         <svg id="rChart" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-        <div class="chart-axis"><span>0秒</span><span id="rDur">30秒</span></div></div>
-      <div><span>ミスの多いキー</span><div id="rMiss"></div></div>
+        <div class="chart-axis"><span id="rZero">0秒</span><span id="rDur">30秒</span></div></div>
+      <div><span data-i18n="r.missKeys">ミスの多いキー</span><div id="rMiss"></div></div>
     </div>
-    <p id="rNew" hidden>自己ベスト更新</p>
+    <p id="rNew" hidden data-i18n="r.newBest">自己ベスト更新</p>
     <p id="rFail" hidden></p>
-    <div class="actions"><button id="again">もう一度</button><button id="recBtn2">記録を見る</button><span class="hint"><span><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
-    <div class="share"><span>シェア</span><button id="shCopy">コピー</button><button id="shX">Xに投稿</button><button id="shNative" hidden>共有</button></div>
+    <div class="actions"><button id="again" data-i18n="again">もう一度</button><button id="recBtn2" data-i18n="r.viewRecords">記録を見る</button><span class="hint"><span data-i18n="r.restartKeys"><kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開</span></span></div>
+    <div class="share"><span data-i18n="share">シェア</span><button id="shCopy" data-i18n="share.copy">コピー</button><button id="shX" data-i18n="share.x">Xに投稿</button><button id="shNative" hidden data-i18n="share.native">共有</button></div>
   </section>
 
   <section id="help" hidden>
-    <div class="rec-head"><h2>遊び方</h2><button id="helpClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="rec-head"><h2 data-i18n="help">遊び方</h2><button id="helpClose" data-i18n="close">閉じる <kbd>Esc</kbd></button></div>
     <div class="help-body" id="helpBody"></div>
   </section>
 
   <section id="records" hidden>
-    <div class="rec-head"><h2>記録</h2><button id="recClose">閉じる <kbd>Esc</kbd></button></div>
+    <div class="rec-head"><h2 data-i18n="records">記録</h2><button id="recClose" data-i18n="close">閉じる <kbd>Esc</kbd></button></div>
     <div class="rec-filters" id="recFilters"></div>
     <div class="best-card" id="bestCard"></div>
-    <div class="rec-tabs" role="tablist"><button role="tab" data-tab="rank">ランキング</button><button role="tab" data-tab="hist">最近のプレイ</button></div>
+    <div class="rec-tabs" role="tablist"><button role="tab" data-tab="rank" data-i18n="rec.rank">ランキング</button><button role="tab" data-tab="hist" data-i18n="rec.hist">最近のプレイ</button></div>
     <div class="rec-list" id="recList"></div>
   </section>
 </main></div>
@@ -654,6 +654,64 @@ function saveSettings(){ try{ localStorage.setItem('typeburst-settings', JSON.st
 const FXM=[.45,1,1.8];
 const mult = () => FXM[settings.fx];
 
+/* ---------- i18n ---------- */
+// 画面の文字はすべてここに置き、t('キー') で引く。{name} は穴埋め。値に <kbd> などのタグを含むものは innerHTML で入れる
+const I18N={
+ ja:{
+  'nav.settings':'設定', 'text.words':'英単語', 'text.sentence':'英文', 'text.roma':'ローマ字',
+  'mode.normal':'ノーマル', 'mode.hard':'ハード', 'mode.hardcore':'ハードコア',
+  'mode.hard.aria':'ハード（スコア×1.5）', 'mode.hardcore.aria':'ハードコア（スコア×2）',
+  'rule.normal':'ミスするとコンボの段階が1つ下がり、ゲージが少し減る',
+  'rule.hard':'ミスするとコンボ・フィーバー・ゲージ・コード進行がすべて最初に戻る',
+  'rule.hardcore':'1回ミスした時点でゲーム終了',
+  'modeTitle':'{label}：{rule}', 'ruleHint':'{label}：{rule}',
+  'dur.30':'30秒', 'dur.60':'60秒', 'sec':'{n}秒',
+  'sound.on':'音：オン', 'sound.off':'音：オフ', 'vol':'音量',
+  'fx':'演出', 'fx.0':'演出：弱', 'fx.1':'演出：中', 'fx.2':'演出：強',
+  'theme':'テーマ', 'records':'記録', 'help':'遊び方', 'kb':'タイピング入力',
+  'theme.night':'ナイト', 'theme.mono':'モノクロ', 'theme.paper':'ペーパー', 'theme.cream':'クリーム', 'theme.ocean':'オーシャン',
+  'theme.forest':'フォレスト', 'theme.twilight':'トワイライト', 'theme.sakura':'サクラ', 'theme.ember':'エンバー', 'theme.cyber':'サイバー',
+  'tap':'タップしてキーボードを出す', 'tap.roma':'タップしてキーボードを出す（英字入力に切り替えてください）',
+  'hint.start':'文字を打つとスタート', 'hint.fever':'ゲージ満タンでフィーバー', 'hint.tab':'<kbd>Tab</kbd> でやり直し', 'restart':'やり直す',
+  'bestGap':'BEST まで {n}',
+  'r.acc':'正確率', 'r.combo':'最大コンボ', 'r.stage':'最高ステージ', 'r.fever':'フィーバー', 'r.best':'自己ベスト',
+  'r.wpmChart':'WPMの推移', 'r.peak':'最高 {n} WPM', 'r.missKeys':'ミスの多いキー', 'r.noMiss':'ミスなし',
+  'r.newBest':'自己ベスト更新', 'r.fail':'ミスで終了（{n}秒）', 'again':'もう一度', 'r.viewRecords':'記録を見る',
+  'r.restartKeys':'<kbd>Tab</kbd> か <kbd>Enter</kbd> でも再開',
+  'share':'シェア', 'share.copy':'コピー', 'share.x':'Xに投稿', 'share.native':'共有', 'share.copied':'コピーしました', 'share.copyFail':'コピーできませんでした',
+  'share.run':'今回の結果', 'share.best':'自己ベスト',
+  'share.head':'typeburst {label} {score}pts [{text} {mode} {dur}秒]', 'share.acc':'正確率{n}%', 'share.combo':'最大{n}combo',
+  'close':'閉じる <kbd>Esc</kbd>',
+  'rec.rank':'ランキング', 'rec.hist':'最近のプレイ', 'rec.f.text':'出題', 'rec.f.mode':'難易度', 'rec.f.dur':'時間',
+  'rec.bestLabel':'自己ベスト', 'rec.none':'まだ記録がありません', 'rec.playThis':'{cat} で遊んでみよう',
+  'rec.noSecond':'2位以降の記録はまだありません', 'rec.noneHere':'この条件の記録はまだありません',
+  'cat':'{text}・{mode}・{dur}秒',
+  'help.diff':'難易度', 'help.diffNote':'ヘッダーの <b>☠</b>（ハード）と <b>☠☠</b>（ハードコア）で切り替え。選んでいるものをもう一度押すとノーマル。',
+  'help.combo':'コンボ', 'help.bass':'ベースが入る', 'help.chord':'和音が入る',
+  'help.comboNote':'正しく打つたびにコンボが増え、色と倍率が上がる。ミスするとノーマルでは段階が1つ下がり、ハードでは0に戻る。',
+  'help.fever':'フィーバー', 'help.feverNote':'正しく打つとゲージが増え、<b>満タンで1つ上の段階</b>へ。フィーバー中はゲージが減り続け、<b>0で1段階下がる</b>。上の段階ほど貯まりにくく、早く減る。',
+  'help.score':'スコア', 'help.scoreKey':'<b>1打</b>：10点 × 倍率', 'help.scoreWord':'<b>単語を打ち切る</b>：（文字数×25 ＋ 連続正解×5）× 倍率',
+  'help.scoreMult':'<b>倍率</b>：コンボ × フィーバー × 難易度', 'help.crit':'<b style="color:var(--crit)">CRITICAL</b>：金色の単語を打ち切ると ×3。途中でミスすると金色は消える。',
+  'help.best':'プレイ中は自己ベストまでの差が出て、超えると NEW RECORD。',
+  'help.text':'出題モード', 'help.words':'<b>英単語</b>：ランダムな英単語。スペースで次へ。', 'help.sentence':'<b>英文</b>：短い英文を単語ごとに打つ。スペースで次へ。',
+  'help.roma':'<b>ローマ字</b>：日本語の文を文節ごとに打つ。shi/si、tsu/tu、ん の nn など好きな綴りでよい。打ち切ると自動で次へ（スペース不要）。',
+  'help.keys':'操作', 'help.keysLine':'<kbd>Tab</kbd> やり直し　<kbd>Enter</kbd> 結果画面からもう一度　<kbd>Esc</kbd> 記録・遊び方を閉じる',
+  'help.mobile':'スマホは画面をタップしてキーボードを出す。ローマ字モードは英字キーボードで打つ。'
+ },
+ en:{}
+};
+let LANG = (settings.lang && I18N[settings.lang]) ? settings.lang : 'ja';
+function t(k,v){ let s=(I18N[LANG]&&I18N[LANG][k]!=null)?I18N[LANG][k]:(I18N.ja[k]!=null?I18N.ja[k]:k);
+  if(v) s=s.replace(/\{(\w+)\}/g,(_,n)=>v[n]!=null?v[n]:''); return s; }
+const textName = k => t('text.'+k), modeName = m => t('mode.'+m), modeRule = m => t('rule.'+m), themeName = k => t('theme.'+k);
+/* data-i18n（中身）・data-i18n-title・data-i18n-aria の付いた要素を今の言語で書き換える */
+function applyStaticText(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(e=>{ e.innerHTML=t(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-title]').forEach(e=>{ e.title=t(e.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(e=>{ e.setAttribute('aria-label',t(e.dataset.i18nAria)); });
+}
+
 /* ---------- themes ---------- */
 // tiers: コンボ段階 0/20/50/100/200 の色。hi: 強調色（段階アップの文字・リングなど）
 const THEMES={
@@ -695,15 +753,12 @@ const themeIcon = (k,size) => { const t=THEMES[k];
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${THEME_ICON[k].replace(/"C([0-4])"/g,(_,i)=>`"${t.tiers[i]}"`).replace(/"BG"/g,`"${t.bg}"`)}</svg>`; };
 const THEME_ORDER=['night','mono','paper','cream','ocean','forest','twilight','sakura','ember','cyber'];
 if(!THEMES[settings.theme]) settings.theme='night';
-const TEXT_NAME={words:'英単語', sentence:'英文', roma:'ローマ字'};
-if(!TEXT_NAME[settings.text]) settings.text='words';
+const TEXT_KEYS=['words','sentence','roma'];
+if(!TEXT_KEYS.includes(settings.text)) settings.text='words';
 const MODE_MULT={normal:1, hard:1.5, hardcore:2};
-// 難易度ごとのルール説明（案内・説明カード・遊び方・ボタンの説明はここから作る）
-const MODE_RULE={normal:'ミスするとコンボの段階が1つ下がり、ゲージが少し減る',
-  hard:'ミスするとコンボ・フィーバー・ゲージ・コード進行がすべて最初に戻る',
-  hardcore:'1回ミスした時点でゲーム終了'};
+// 難易度ごとのルール説明は辞書の rule.*（案内・説明カード・遊び方・ボタンの説明はここから作る）
 const MODE_ICON={normal:'', hard:'☠', hardcore:'☠☠'};
-const modeLabel = m => `${MODE_ICON[m]?MODE_ICON[m]+' ':''}${({normal:'ノーマル',hard:'ハード',hardcore:'ハードコア'})[m]} ×${MODE_MULT[m]}`;
+const modeLabel = m => `${MODE_ICON[m]?MODE_ICON[m]+' ':''}${modeName(m)} ×${MODE_MULT[m]}`;
 if(!settings.seenRules || typeof settings.seenRules!=='object') settings.seenRules={};
 if(!MODE_MULT[settings.mode]) settings.mode='normal';
 const theme = () => THEMES[settings.theme];
@@ -726,8 +781,12 @@ function applyTheme(){
 }
 /* テーマ一覧パネル：ヘッダーのボタンで開閉 */
 const themePanel=$('#themePanel'), themeBtn=$('#themeBtn');
-themePanel.innerHTML=THEME_ORDER.map(k=>{ const t=THEMES[k];
-  return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${themeIcon(k,26)}<span class="bars">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span></span>${t.name}</button>`; }).join('');
+function buildThemePanel(){
+  themePanel.innerHTML=THEME_ORDER.map(k=>{ const t=THEMES[k];
+    return `<button data-v="${k}"><span class="pv" style="background:${t.bg}">${themeIcon(k,26)}<span class="bars">${t.tiers.map((c,i)=>`<i style="background:${c};height:${40+i*15}%"></i>`).join('')}</span></span>${themeName(k)}</button>`; }).join('');
+  themePanel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings.theme));
+}
+buildThemePanel();
 function setThemePanel(open){ themePanel.hidden=!open; themeBtn.setAttribute('aria-expanded',String(open)); }
 themeBtn.addEventListener('click',e=>{ e.stopPropagation(); themeBtn.blur(); setThemePanel(themePanel.hidden); });
 themePanel.addEventListener('click',e=>{ e.stopPropagation(); const b=e.target.closest('button'); if(!b) return;
@@ -760,11 +819,12 @@ function fxPreview(b){
 function showRuleCard(m){
   if(m==='normal' || settings.seenRules[m]) return;
   settings.seenRules[m]=true; saveSettings();
-  const c=$('#ruleCard'); c.querySelector('b').textContent=modeLabel(m); c.querySelector('p').textContent=MODE_RULE[m]; c.hidden=false;
+  const c=$('#ruleCard'); c.querySelector('b').textContent=modeLabel(m); c.querySelector('p').textContent=modeRule(m); c.hidden=false;
 }
 const hideRuleCard = () => { $('#ruleCard').hidden=true; };
 $('#ruleOk').addEventListener('click',e=>{ e.stopPropagation(); hideRuleCard(); });
-document.querySelectorAll('.group[data-key="mode"] button').forEach(b=>{ const m=b.dataset.v; b.title=`${modeLabel(m)}：${MODE_RULE[m]}`; });
+const syncModeTitles = () => document.querySelectorAll('.group[data-key="mode"] button').forEach(b=>{ const m=b.dataset.v; b.title=t('modeTitle',{label:modeLabel(m),rule:modeRule(m)}); });
+syncModeTitles();
 const soundBtn=$('#soundBtn');
 soundBtn.addEventListener('click',()=>{ settings.sound=!settings.sound; saveSettings(); syncOpts(); soundBtn.blur(); initAudio(); sfx.key(); });
 /* 音量スライダー：動かすと即反映。0にすると音なし、上げると音ありに戻る */
@@ -779,9 +839,9 @@ function syncOpts(){
   // 演出メーター：今の段階以下の棒を点灯
   document.querySelectorAll('.meter button').forEach(b=>{ const v=Number(b.dataset.v);
     b.classList.toggle('lit',v<=settings.fx); b.setAttribute('aria-pressed',String(v===settings.fx)); });
-  const rh=$('#ruleHint'); rh.textContent=`${modeLabel(settings.mode)}：${MODE_RULE[settings.mode]}`; rh.classList.toggle('danger',settings.mode!=='normal');
+  const rh=$('#ruleHint'); rh.textContent=t('ruleHint',{label:modeLabel(settings.mode),rule:modeRule(settings.mode)}); rh.classList.toggle('danger',settings.mode!=='normal');
   soundBtn.classList.toggle('muted',!settings.sound); volRange.value=Math.round(settings.vol*100); volRange.classList.toggle('muted',!settings.sound); soundBtn.setAttribute('aria-pressed',String(settings.sound));
-  soundBtn.title=soundBtn.ariaLabel = settings.sound ? '音：オン' : '音：オフ';
+  soundBtn.title=soundBtn.ariaLabel = t(settings.sound ? 'sound.on' : 'sound.off');
   $('#playBox').classList.toggle('hard',settings.mode==='hard'); $('#playBox').classList.toggle('hardcore',settings.mode==='hardcore');
   document.body.classList.toggle('fx0', settings.fx===0);
   $('#modeTag').hidden = settings.mode==='normal'; $('#modeTag').textContent = settings.mode;
@@ -1237,7 +1297,7 @@ function fxCrit(el){ const m=mult(), [x,y,r]=center(el), g=critC();
 function syncBestTag(){
   const el=$('#bestTag'); el.hidden=!runBest;
   el.classList.toggle('hit',bestHit);
-  el.textContent = bestHit ? 'NEW RECORD' : `BEST まで ${Math.max(0,runBest-score).toLocaleString()}`;
+  el.textContent = bestHit ? 'NEW RECORD' : t('bestGap',{n:Math.max(0,runBest-score).toLocaleString()});
 }
 function checkBest(){
   if(!runBest || bestHit || ended) return;
@@ -1409,7 +1469,7 @@ function restart(){
   timerEl.textContent=settings.dur; timerEl.classList.remove('hurry'); scoreEl.textContent='0';
   caret.classList.add('idle');
   addWords(80); updateCombo(false); updateMultUI(); syncGauge(); syncReading();
-  tapcover.textContent = isRoma() ? 'タップしてキーボードを出す（英字入力に切り替えてください）' : 'タップしてキーボードを出す';
+  tapcover.textContent = t(isRoma() ? 'tap.roma' : 'tap');
   if(typeof resetKb==='function'){ resetKb(); syncCover(); }
   requestAnimationFrame(()=>{ lineH=wordEls[0].offsetHeight; placeCaret(); });
 }
@@ -1484,9 +1544,8 @@ function submitWord(){
 }
 /* ---------- records ---------- */
 const REC_KEY='typeburst-records', RANK_N=10, HIST_N=20;
-const CATS=[['normal',30],['normal',60],['hard',30],['hard',60],['hardcore',30],['hardcore',60]], TEXTS=Object.keys(TEXT_NAME);
+const CATS=[['normal',30],['normal',60],['hard',30],['hard',60],['hardcore',30],['hardcore',60]], TEXTS=TEXT_KEYS;
 const textOf = r => r.text||'words'; // 出題モード追加前の記録は英単語
-const MODE_NAME={normal:'ノーマル', hard:'ハード', hardcore:'ハードコア'};
 function loadRecords(){
   let d=null; try{ d=JSON.parse(localStorage.getItem(REC_KEY)); }catch(e){}
   if(!d || !Array.isArray(d.runs)) d={v:1, runs:[]};
@@ -1517,38 +1576,38 @@ const dash = v => v==null ? '-' : v;
 
 let recText='words', recMode='normal', recDur=30, recTab='rank', lastRunDate=0;
 const fmtDay = t => { if(!t) return '-'; const d=new Date(t); return `${d.getMonth()+1}/${d.getDate()}`; };
-const catChip = r => [TEXT_NAME[textOf(r)], MODE_ICON[r.mode], r.dur+'s'].filter(Boolean).join('・');
-const catName = (t,m,d) => `${TEXT_NAME[t]}・${MODE_NAME[m]}・${d}秒`;
+const catChip = r => [textName(textOf(r)), MODE_ICON[r.mode], r.dur+'s'].filter(Boolean).join('・');
+const catName = (tx,m,d) => t('cat',{text:textName(tx),mode:modeName(m),dur:d});
 function renderRecords(){
   const runs=loadRecords().runs, isNow = r => r.date && r.date===lastRunDate;
   const seg=(id,label,cur,opts)=>`<div class="seg" data-f="${id}"><span>${label}</span>${opts.map(([v,t,ti])=>`<button data-v="${v}" class="${String(cur)===String(v)?'on':''}"${ti?` title="${ti}"`:''}>${t}</button>`).join('')}</div>`;
   $('#recFilters').innerHTML =
-    seg('text','出題',recText,TEXTS.map(t=>[t,TEXT_NAME[t]]))+
-    seg('mode','難易度',recMode,[['normal','ノーマル'],['hard','☠','ハード'],['hardcore','☠☠','ハードコア']])+
-    seg('dur','時間',recDur,[[30,'30s'],[60,'60s']]);
+    seg('text',t('rec.f.text'),recText,TEXTS.map(k=>[k,textName(k)]))+
+    seg('mode',t('rec.f.mode'),recMode,[['normal',modeName('normal')],['hard','☠',modeName('hard')],['hardcore','☠☠',modeName('hardcore')]])+
+    seg('dur',t('rec.f.dur'),recDur,[[30,'30s'],[60,'60s']]);
   const rank=ranking(runs,recText,recMode,recDur), top=rank[0];
   // 自己ベストのカード
   if(top){
-    const st=[[top.wpm,'WPM'],[top.acc!=null?top.acc+'%':null,'正確率'],[top.combo,'最大コンボ'],[top.stage?STAGE_NAMES[top.stage]:null,'最高ステージ']]
+    const st=[[top.wpm,'WPM'],[top.acc!=null?top.acc+'%':null,t('r.acc')],[top.combo,t('r.combo')],[top.stage?STAGE_NAMES[top.stage]:null,t('r.stage')]]
       .filter(([v])=>v!=null).map(([v,l])=>`<span><b>${v}</b>${l}</span>`).join('');
-    cardShareText=runShareText(top,'自己ベスト');
-    $('#bestCard').innerHTML=`<div class="bc-share"><button data-sh="copy">コピー</button><button data-sh="x">Xに投稿</button>${navigator.share?'<button data-sh="native">共有</button>':''}</div>
-      <div class="bc-label"><b>自己ベスト</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
+    cardShareText=runShareText(top,t('share.best'));
+    $('#bestCard').innerHTML=`<div class="bc-share"><button data-sh="copy" data-i18n="share.copy">${t('share.copy')}</button><button data-sh="x" data-i18n="share.x">${t('share.x')}</button>${navigator.share?`<button data-sh="native" data-i18n="share.native">${t('share.native')}</button>`:''}</div>
+      <div class="bc-label"><b>${t('rec.bestLabel')}</b>${catName(recText,recMode,recDur)}${isNow(top)?'<span class="bc-new">NEW</span>':''}</div>
       <div class="bc-score">${top.score.toLocaleString()}<small>pts</small></div>
       <div class="bc-stats">${st}<span>${fmtDate(top.date)}</span></div>`;
-  } else $('#bestCard').innerHTML=`<div class="bc-empty">まだ記録がありません<small>${catName(recText,recMode,recDur)} で遊んでみよう</small></div>`;
+  } else $('#bestCard').innerHTML=`<div class="bc-empty">${t('rec.none')}<small>${t('rec.playThis',{cat:catName(recText,recMode,recDur)})}</small></div>`;
   document.querySelectorAll('.rec-tabs button').forEach(b=>{ const on=b.dataset.tab===recTab; b.classList.toggle('on',on); b.setAttribute('aria-selected',String(on)); });
   // ランキング（2位以降。1位はカード）／最近のプレイ
   if(recTab==='rank'){
     $('#recList').innerHTML = rank.length>1 ? rank.slice(1).map((r,i)=>`<div class="rrow${isNow(r)?' now':''}"><span class="rk r${i+2}">${i+2}</span>
       <span class="sc">${r.score.toLocaleString()}</span><span class="bar"><i style="width:${Math.max(3,r.score/top.score*100).toFixed(1)}%"></i></span>
       <span class="wpm">${dash(r.wpm)}<small>WPM</small></span><span class="dt">${fmtDay(r.date)}</span></div>`).join('')
-      : `<p class="empty">${top?'2位以降の記録はまだありません':'この条件の記録はまだありません'}</p>`;
+      : `<p class="empty">${t(top?'rec.noSecond':'rec.noneHere')}</p>`;
   } else {
     const hist=runs.filter(r=>r.date).sort((a,b)=>b.date-a.date).slice(0,HIST_N);
     $('#recList').innerHTML = hist.length ? hist.map(r=>`<div class="hrow2${isNow(r)?' now':''}"><span class="dt">${fmtDate(r.date)}</span>
       <span class="chip" title="${catName(textOf(r),r.mode,r.dur)}">${catChip(r)}</span><span class="sc">${r.score.toLocaleString()}</span>
-      <span class="wpm">${dash(r.wpm)}<small>WPM</small></span></div>`).join('') : '<p class="empty">まだ記録がありません</p>';
+      <span class="wpm">${dash(r.wpm)}<small>WPM</small></span></div>`).join('') : `<p class="empty">${t('rec.none')}</p>`;
   }
 }
 $('#recFilters').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const f=b.closest('.seg').dataset.f, v=b.dataset.v;
@@ -1560,25 +1619,25 @@ function renderHelp(){
   const row=(n,x,d,cls='')=>`<div class="hrow ${cls}"><span class="n">${n}</span><span class="x">${x}</span><span class="d">${d}</span></div>`;
   const tiers=theme().tiers;
   $('#helpBody').innerHTML=[
-    `<section><h3>難易度</h3>${['normal','hard','hardcore'].map(m=>row(`${MODE_ICON[m]} ${MODE_NAME[m]}`,'×'+MODE_MULT[m],MODE_RULE[m],m==='normal'?'':'danger')).join('')}
-      <p>ヘッダーの <b>☠</b>（ハード）と <b>☠☠</b>（ハードコア）で切り替え。選んでいるものをもう一度押すとノーマル。</p></section>`,
-    `<section><h3>コンボ</h3>${TIERS.map((t,i)=>row(`<i class="sw" style="background:${tiers[i]}"></i>${t.at}〜`,'×'+TIER_MULT[i],['','ベースが入る','和音が入る','',''][i])).join('')}
-      <p>正しく打つたびにコンボが増え、色と倍率が上がる。ミスするとノーマルでは段階が1つ下がり、ハードでは0に戻る。</p></section>`,
-    `<section><h3>フィーバー</h3>${STAGE_NAMES.slice(1).map((n,i)=>row(n,'×'+STAGE_MULT[i+1],'BPM '+STAGE_BPM[i+1])).join('')}
-      <p>正しく打つとゲージが増え、<b>満タンで1つ上の段階</b>へ。フィーバー中はゲージが減り続け、<b>0で1段階下がる</b>。上の段階ほど貯まりにくく、早く減る。</p></section>`,
-    `<section><h3>スコア</h3>
-      <p><b>1打</b>：10点 × 倍率</p>
-      <p><b>単語を打ち切る</b>：（文字数×25 ＋ 連続正解×5）× 倍率</p>
-      <p><b>倍率</b>：コンボ × フィーバー × 難易度</p>
-      <p><b style="color:var(--crit)">CRITICAL</b>：金色の単語を打ち切ると ×3。途中でミスすると金色は消える。</p>
-      <p>プレイ中は自己ベストまでの差が出て、超えると NEW RECORD。</p></section>`,
-    `<section><h3>出題モード</h3>
-      <p><b>英単語</b>：ランダムな英単語。スペースで次へ。</p>
-      <p><b>英文</b>：短い英文を単語ごとに打つ。スペースで次へ。</p>
-      <p><b>ローマ字</b>：日本語の文を文節ごとに打つ。shi/si、tsu/tu、ん の nn など好きな綴りでよい。打ち切ると自動で次へ（スペース不要）。</p></section>`,
-    `<section><h3>操作</h3>
-      <p><kbd>Tab</kbd> やり直し　<kbd>Enter</kbd> 結果画面からもう一度　<kbd>Esc</kbd> 記録・遊び方を閉じる</p>
-      <p>スマホは画面をタップしてキーボードを出す。ローマ字モードは英字キーボードで打つ。</p></section>`
+    `<section><h3>${t('help.diff')}</h3>${['normal','hard','hardcore'].map(m=>row(`${MODE_ICON[m]} ${modeName(m)}`,'×'+MODE_MULT[m],modeRule(m),m==='normal'?'':'danger')).join('')}
+      <p>${t('help.diffNote')}</p></section>`,
+    `<section><h3>${t('help.combo')}</h3>${TIERS.map((tr,i)=>row(`<i class="sw" style="background:${tiers[i]}"></i>${tr.at}〜`,'×'+TIER_MULT[i],['',t('help.bass'),t('help.chord'),'',''][i])).join('')}
+      <p>${t('help.comboNote')}</p></section>`,
+    `<section><h3>${t('help.fever')}</h3>${STAGE_NAMES.slice(1).map((n,i)=>row(n,'×'+STAGE_MULT[i+1],'BPM '+STAGE_BPM[i+1])).join('')}
+      <p>${t('help.feverNote')}</p></section>`,
+    `<section><h3>${t('help.score')}</h3>
+      <p>${t('help.scoreKey')}</p>
+      <p>${t('help.scoreWord')}</p>
+      <p>${t('help.scoreMult')}</p>
+      <p>${t('help.crit')}</p>
+      <p>${t('help.best')}</p></section>`,
+    `<section><h3>${t('help.text')}</h3>
+      <p>${t('help.words')}</p>
+      <p>${t('help.sentence')}</p>
+      <p>${t('help.roma')}</p></section>`,
+    `<section><h3>${t('help.keys')}</h3>
+      <p>${t('help.keysLine')}</p>
+      <p>${t('help.mobile')}</p></section>`
   ].join('');
 }
 /* 記録・遊び方などの画面の開閉。閉じると、開く前の画面（ゲームか結果）に戻る */
@@ -1614,10 +1673,17 @@ function renderDetail(T){
   const xy=pts.map((v,i)=>`${(i/(n-1)*100).toFixed(2)},${(100-v/top*100).toFixed(2)}`);
   const grid=[.25,.5,.75].map(k=>`<line class="gd" x1="0" x2="100" y1="${k*100}" y2="${k*100}"/>`).join('');
   $('#rChart').innerHTML=`${grid}<polygon class="ar" points="0,100 ${xy.join(' ')} 100,100"/><polyline class="ln" points="${xy.join(' ')}"/>`;
-  $('#rPeak').textContent=`最高 ${Math.round(peak)} WPM`;
-  $('#rDur').textContent=n+'秒';
+  lastDetail={peak:Math.round(peak),n}; fillDetailText();
   const miss=Object.entries(missMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  $('#rMiss').innerHTML = miss.length ? miss.map(([k,v])=>`<span><kbd>${esc(k)}</kbd> ×${v}</span>`).join('') : '<span>ミスなし</span>';
+  $('#rMiss').innerHTML = miss.length ? miss.map(([k,v])=>`<span><kbd>${esc(k)}</kbd> ×${v}</span>`).join('') : `<span data-i18n="r.noMiss">${t('r.noMiss')}</span>`;
+}
+/* 結果画面の、数字の入る文言（言語を切り替えたときも作り直す） */
+let lastDetail={peak:0,n:30}, lastRes=null;
+function fillDetailText(){
+  $('#rPeak').textContent=t('r.peak',{n:lastDetail.peak}); $('#rDur').textContent=t('sec',{n:lastDetail.n}); $('#rZero').textContent=t('sec',{n:0});
+  if(!lastRes) return;
+  $('#rFever').textContent=t('sec',{n:lastRes.fever}); $('#rFail').textContent=lastRes.failedAt?t('r.fail',{n:lastRes.failedAt.toFixed(1)}):'';
+  shareText=runShareText(lastRes.run,t('share.run'));
 }
 
 /* 結果のシェア */
@@ -1625,9 +1691,9 @@ let shareText='';
 /* 記録1件からシェア用の文を作る。古い記録でない項目は省く */
 function runShareText(r,label){
   const url = location.protocol.startsWith('http') ? ' '+location.origin+location.pathname : '';
-  const p=[`typeburst ${label} ${r.score.toLocaleString()}pts [${TEXT_NAME[textOf(r)]} ${MODE_NAME[r.mode]} ${r.dur}秒]`];
-  if(r.wpm!=null) p.push(r.wpm+'WPM'); if(r.acc!=null) p.push(`正確率${r.acc}%`);
-  if(r.combo!=null) p.push(`最大${r.combo}combo`); if(r.stage) p.push(STAGE_NAMES[r.stage]);
+  const p=[t('share.head',{label,score:r.score.toLocaleString(),text:textName(textOf(r)),mode:modeName(r.mode),dur:r.dur})];
+  if(r.wpm!=null) p.push(r.wpm+'WPM'); if(r.acc!=null) p.push(t('share.acc',{n:r.acc}));
+  if(r.combo!=null) p.push(t('share.combo',{n:r.combo})); if(r.stage) p.push(STAGE_NAMES[r.stage]);
   return p.join(' ')+url;
 }
 function copyText(t){
@@ -1635,11 +1701,11 @@ function copyText(t){
   return new Promise((ok,ng)=>{ const ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;opacity:0';
     document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy') ? ok() : ng(); }catch(e){ ng(e); } ta.remove(); });
 }
-function flashLabel(b,text){ const o=b.dataset.label||(b.dataset.label=b.textContent); b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.textContent=o,1500); }
+function flashLabel(b,text){ b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.innerHTML=t(b.dataset.i18n),1500); }
 /* シェアの操作（結果画面と自己ベストのカードで共用）。kind: copy / x / native */
 function doShare(kind,text,b){
   b.blur();
-  if(kind==='copy') copyText(text).then(()=>flashLabel(b,'コピーしました'),()=>flashLabel(b,'コピーできませんでした'));
+  if(kind==='copy') copyText(text).then(()=>flashLabel(b,t('share.copied')),()=>flashLabel(b,t('share.copyFail')));
   else if(kind==='x') window.open('https://x.com/intent/post?text='+encodeURIComponent(text),'_blank','noopener');
   else navigator.share({text}).catch(()=>{});
 }
@@ -1663,9 +1729,9 @@ function end(failedAt){ // failedAt: ハードコアでミスした時点の経�
   const {isBest, best} = addRun(run);
   $('#rWpm').textContent=wpm; $('#rAcc').textContent=acc+'%'; $('#rCombo').textContent=maxCombo;
   $('#rStage').textContent=maxStage?STAGE_NAMES[maxStage]:'-';
-  $('#rCrit').textContent=critN; $('#rFever').textContent=feverTime.toFixed(1)+'秒'; $('#rBest').textContent=best.toLocaleString();
-  renderDetail(T); shareText=runShareText(run,'今回の結果');
-  $('#rFail').hidden=!failedAt; if(failedAt) $('#rFail').textContent=`ミスで終了（${failedAt.toFixed(1)}秒）`;
+  $('#rCrit').textContent=critN; $('#rBest').textContent=best.toLocaleString();
+  lastRes={run,failedAt,fever:feverTime.toFixed(1)}; renderDetail(T);
+  $('#rFail').hidden=!failedAt;
   $('#game').hidden=true; $('#result').hidden=false; syncScroll();
   const rs=$('#rScore'), total=score, D=Math.min(1700,500+total/40), s0=performance.now(); let last=0;
   rs.textContent='0';
@@ -1737,11 +1803,11 @@ $('#again').addEventListener('click',()=>{ initAudio(); restart(); if(touchOnly)
 
 if(touchOnly){
   const rb=$('#restartBtn');
-  $('#hint').innerHTML='<span id="ruleHint"></span><span>ゲージ満タンでフィーバー</span>';
+  $('#hint').innerHTML='<span id="ruleHint"></span><span data-i18n="hint.fever"></span>';
   $('#hint').appendChild(rb);
 }
 
-syncOpts(); applyTheme(); resize(); restart(); requestAnimationFrame(loop);
+applyStaticText(); syncOpts(); applyTheme(); resize(); restart(); requestAnimationFrame(loop);
 if(document.fonts) document.fonts.ready.then(()=>{ if(wordEls[0]){ lineH=wordEls[0].offsetHeight; placeCaret(); } });
 </script>
 </body>
