@@ -1109,7 +1109,7 @@ const cv=$('#fx'), cx=cv.getContext('2d'), vignette=$('#vignette');
 let W=0,H=0;
 // 演出はぼかしのある光なので、高解像度の画面でも1倍で描く（2倍だと画素数が4倍になり重い）
 function resize(){ const dpr=1; W=innerWidth; H=innerHeight;
-  cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); fxDirty=true; placeCaret(); }
+  cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); curFontSize=0; fxDirty=true; placeCaret(); } // 大きさを変えるとキャンバスの状態（書体など）が消える
 addEventListener('resize',resize);
 const parts=[], rings=[], texts=[], lines=[], shards=[];
 let shake=0, score=0, shown=0, lastScorePop=0;
@@ -1144,6 +1144,9 @@ function arrive(s){
     scoreEl.animate([{transform:'scale(1.18)'},{transform:'scale(1)'}],{duration:120,easing:'ease-out'});
     spark(s.tx,s.ty,Math.round(4*mult()),s.color,3,1.4); }
 }
+/* 書体の指定は重いので、大きさが変わったときだけ指定し直す（拡大・縮小は cx.scale で行う） */
+let curFontSize=0;
+function setFont(px){ if(px!==curFontSize){ curFontSize=px; cx.font=`800 ${px}px "JetBrains Mono", monospace`; } }
 let fxDirty=true; // キャンバスに何か残っているか
 function loop(){
   const frozen = performance.now()<hitstopUntil; // ヒットストップ中は動きの計算を止め、描画だけ続ける
@@ -1185,8 +1188,8 @@ function loop(){
         if(dx*dx+dy*dy<400 || s.t>130){ arrive(s); shards.splice(i,1); continue; } }
       s.x+=s.vx; s.y+=s.vy; s.rot+=s.vr; }
     const sc=s.t<16?1+s.t*.02:Math.max(.5,1.3-(s.t-16)*.02);
-    cx.save(); cx.translate(s.x,s.y); cx.rotate(s.rot); cx.globalAlpha=1; cx.fillStyle=s.color;
-    cx.font=`800 ${s.size*sc}px "JetBrains Mono", monospace`; cx.fillText(s.ch,0,0); cx.restore();
+    cx.save(); cx.translate(s.x,s.y); cx.rotate(s.rot); cx.scale(sc,sc); cx.globalAlpha=1; cx.fillStyle=s.color;
+    setFont(s.size); cx.fillText(s.ch,0,0); cx.restore();
   }
   // floating texts / damage numbers
   cx.textBaseline='alphabetic';
@@ -1195,7 +1198,7 @@ function loop(){
     if(t.life<=0){ texts.splice(i,1); continue; }
     const sc = t.pop ? 1+1.2*Math.max(0,(t.life-.85)/.15) : 1;
     cx.globalAlpha=Math.min(t.dmg?.85:1,t.life*1.6); cx.fillStyle=t.color;
-    cx.font=`800 ${t.size*sc}px "JetBrains Mono", monospace`; cx.fillText(t.text,t.x,t.y);
+    cx.save(); cx.translate(t.x,t.y); cx.scale(sc,sc); setFont(t.size); cx.fillText(t.text,0,0); cx.restore();
   }
   cx.globalAlpha=1;
   fxDirty=!!busy;
