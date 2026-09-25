@@ -690,7 +690,7 @@ const TEXT_NAME={words:'英単語', sentence:'英文', roma:'ローマ字'};
 if(!TEXT_NAME[settings.text]) settings.text='words';
 const MODE_MULT={normal:1, hard:1.5, hardcore:2};
 // 難易度ごとのルール説明（案内・説明カード・遊び方・ボタンの説明はここから作る）
-const MODE_RULE={normal:'ミスするとコンボが途切れ、ゲージが減る',
+const MODE_RULE={normal:'ミスするとコンボの段階が1つ下がり、ゲージが少し減る',
   hard:'ミスするとコンボ・フィーバー・ゲージ・コード進行がすべて最初に戻る',
   hardcore:'1回ミスした時点でゲーム終了'};
 const MODE_ICON={normal:'', hard:'☠', hardcore:'☠☠'};
@@ -774,7 +774,7 @@ function syncOpts(){
 }
 
 /* ---------- tiers (combo) ---------- */
-const TIERS=[0,20,50,100,200].map(at=>({at}));
+const TIERS=[0,10,25,50,100].map(at=>({at})); // 到達しやすさはシミュレーションで調整（60WPM前後で4〜5段階目に届く）
 const TIER_MULT=[1,2,3,4,5];
 let tier=0;
 const tierOf = c => { let t=0; TIERS.forEach((x,i)=>{ if(c>=x.at) t=i; }); return t; };
@@ -918,7 +918,7 @@ function riserStop(){
 /* ---------- gauge & fever stages ---------- */
 const STAGE_NAMES=['','fever','super fever','hyper fever','ultra fever','LIMIT BREAK'], MAX_STAGE=5;
 const STAGE_MULT=[1,2,3,4,5,6], STAGE_BPM=[0,128,140,152,164,176];
-const GAIN_KEY=[1.6,1.5,1.4,1.3,1.2,1.1], GAIN_WORD=4, DRAIN=[0,3,4,5,6.5,8]; // 上の段階ほど貯まりにくく、減りやすい
+const GAIN_KEY=[2.1,1.6,1.5,1.45,1.4,1.3], GAIN_WORD=4, DRAIN=[0,2,2.5,3,3.5,4]; // 上の段階ほど貯まりにくく、減りやすい。60WPM・正確率98%で60秒なら LIMIT BREAK に届く程度
 let gauge=0, fstage=0, maxStage=0, feverT0=0, feverTime=0, schedId=0, step=0, nextT=0, lastMult=1;
 const clock = () => ac ? ac.currentTime : performance.now()/1000;
 const bpm = () => STAGE_BPM[fstage]+Math.min(12,combo/20);
@@ -1364,6 +1364,11 @@ function tickTimer(){
       timerEl.animate([{transform:'scale(1.35)'},{transform:'scale(1)'}],{duration:200,easing:'ease-out'}); }
   }
 }
+/* ノーマルのミス：コンボの段階を1つだけ下げる（コンボ数はその段階の入口に戻す） */
+function comboDown(){
+  const was=tier; combo=TIERS[Math.max(0,tier-1)].at; streak=0; setTier(tierOf(combo)); updateMultUI();
+  if(was>0){ const [x,,r]=center(comboBox); floatText(x,r.top-6,'combo ▼',errC(),18); }
+}
 function breakCombo(){ combo=0; streak=0; if(tier>0) setTier(0); updateMultUI(); }
 
 function onChar(ch){
@@ -1391,7 +1396,7 @@ function onChar(ch){
     if(idx<w.length) missMap[w[idx]]=(missMap[w[idx]]||0)+1;
     if(crit[wi]){ crit[wi]=false; wordEls[wi].classList.remove('crit'); } // ミスすると金色は消える
     fxMiss(span); sfx.miss();
-    if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-18); }
+    if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { comboDown(); addGauge(-12); }
   }
   updateCombo(true);
 }
@@ -1405,7 +1410,7 @@ function submitWord(){
     addGauge(GAIN_WORD);
   } else {
     el.classList.add('wrong'); sfx.miss();
-    if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { breakCombo(); addGauge(-10); }
+    if(settings.mode==='hardcore') failRun(); else if(settings.mode==='hard') hardReset(); else { comboDown(); addGauge(-8); }
     updateCombo(false);
   }
   wi++; typed='';
@@ -1492,7 +1497,7 @@ function renderHelp(){
     `<section><h3>難易度</h3>${['normal','hard','hardcore'].map(m=>row(`${MODE_ICON[m]} ${MODE_NAME[m]}`,'×'+MODE_MULT[m],MODE_RULE[m],m==='normal'?'':'danger')).join('')}
       <p>ヘッダーの <b>☠</b>（ハード）と <b>☠☠</b>（ハードコア）で切り替え。選んでいるものをもう一度押すとノーマル。</p></section>`,
     `<section><h3>コンボ</h3>${TIERS.map((t,i)=>row(`<i class="sw" style="background:${tiers[i]}"></i>${t.at}〜`,'×'+TIER_MULT[i],['','ベースが入る','和音が入る','',''][i])).join('')}
-      <p>正しく打つたびにコンボが増え、色と倍率が上がる。ミスすると0に戻る。</p></section>`,
+      <p>正しく打つたびにコンボが増え、色と倍率が上がる。ミスするとノーマルでは段階が1つ下がり、ハードでは0に戻る。</p></section>`,
     `<section><h3>フィーバー</h3>${STAGE_NAMES.slice(1).map((n,i)=>row(n,'×'+STAGE_MULT[i+1],'BPM '+STAGE_BPM[i+1])).join('')}
       <p>正しく打つとゲージが増え、<b>満タンで1つ上の段階</b>へ。フィーバー中はゲージが減り続け、<b>0で1段階下がる</b>。上の段階ほど貯まりにくく、早く減る。</p></section>`,
     `<section><h3>スコア</h3>
