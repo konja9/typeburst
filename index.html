@@ -46,12 +46,12 @@ body.scrollable{overflow-x:hidden; overflow-y:auto}
 #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:5}
 #flash{position:fixed; inset:0; background:var(--accent); opacity:0; pointer-events:none; z-index:6}
 
-#cam{width:min(960px,92vw); position:relative; z-index:2}
+#cam{width:min(1000px,92vw); position:relative; z-index:2}
 #stage{display:flex; flex-direction:column; gap:3rem}
 header{position:relative; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; font-size:14px; color:var(--dim)}
 .brand{font-weight:800; font-size:20px; color:var(--text); letter-spacing:-.02em; display:flex; align-items:center; gap:.5rem}
 .brand::before{content:""; width:.55em; height:1em; background:var(--accent); border-radius:2px; box-shadow:0 0 10px var(--accent); transition:background .2s}
-.opts{display:flex; gap:1.25rem; background:var(--bg2); padding:.45rem .9rem; border-radius:10px; flex-wrap:wrap}
+.opts{display:flex; gap:.85rem; background:var(--bg2); padding:.45rem .9rem; border-radius:10px; flex-wrap:wrap}
 .group{display:flex; gap:.15rem; align-items:center}
 .group span{margin-right:.3rem}
 button{font:inherit; color:var(--dim); background:none; border:0; padding:.25rem .45rem; border-radius:6px; cursor:pointer; transition:color .15s}
@@ -77,6 +77,9 @@ body.fx0 .play.hardcore{animation:none}
 .meter button:hover ~ button:not(.lit) .bar{background:var(--dim); opacity:.4}
 .meter button:hover ~ button.lit .bar{opacity:.35; box-shadow:none}
 #soundBtn .x{display:none}
+.vol{display:inline-flex; align-items:center; gap:.1rem}
+#volRange{width:58px; accent-color:var(--accent); cursor:pointer}
+#volRange.muted{opacity:.4}
 #soundBtn.muted .x{display:inline}
 #soundBtn:not(.muted){color:var(--accent)}
 .sw{display:inline-block; width:.85em; height:.85em; border-radius:50%; vertical-align:-.1em; border:2px solid var(--bg2); box-shadow:0 0 0 1px var(--dim)}
@@ -293,7 +296,7 @@ kbd{background:var(--bg2); padding:.1em .45em; border-radius:4px; color:var(--te
           <button data-v="hardcore" title="ハードコア：1回ミスで終了／スコア×2" aria-label="ハードコア（スコア×2）"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.7 3 5.9V19a1 1 0 0 0 1 1H9v-2h1.5v2h3v-2H15v2h1.5a1 1 0 0 0 1-1v-2.9c1.7-1.2 3-3.2 3-5.9C20.5 5.6 17 2 12 2zM8.5 13.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm7 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg><small>×2</small></button>
         </div>
       </div>
-      <button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <span class="vol"><button id="soundBtn" class="ic" aria-pressed="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M9 17.5A2.5 2.5 0 1 1 6.5 15c.5 0 1 .1 1.5.3V5l11-2v11.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.3V7.2l-8 1.5z"/><line class="x" x1="3" y1="21" x2="21" y2="3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button><input id="volRange" type="range" min="0" max="100" step="5" aria-label="音量" title="音量"></span>
       <div class="group meter" data-key="fx"><span>演出</span><button data-v="0" title="演出：弱" aria-label="演出：弱"><i class="bar"></i></button><button data-v="1" title="演出：中" aria-label="演出：中"><i class="bar"></i></button><button data-v="2" title="演出：強" aria-label="演出：強"><i class="bar"></i></button></div>
       <button id="themeBtn" aria-expanded="false" aria-controls="themePanel">テーマ <span id="themeSw" class="tsw"></span></button>
       <button id="recBtn">記録</button>
@@ -639,7 +642,7 @@ const wordsEl=$('#words'), wrap=$('#words-wrap'), caret=$('#caret'), timerEl=$('
 
 /* ---------- settings ---------- */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let settings = {text:'words', mode:'normal', dur:30, sound:true, fx: reduced ? 0 : 1, theme:'night'};
+let settings = {text:'words', mode:'normal', dur:30, sound:true, vol:.8, fx: reduced ? 0 : 1, theme:'night'};
 try{ const s = JSON.parse(localStorage.getItem('typeburst-settings')); if(s) Object.assign(settings, s); }catch(e){}
 function saveSettings(){ try{ localStorage.setItem('typeburst-settings', JSON.stringify(settings)); }catch(e){} }
 const FXM=[.45,1,1.8];
@@ -758,6 +761,11 @@ $('#ruleOk').addEventListener('click',e=>{ e.stopPropagation(); hideRuleCard(); 
 document.querySelectorAll('.group[data-key="mode"] button').forEach(b=>{ const m=b.dataset.v; b.title=`${modeLabel(m)}：${MODE_RULE[m]}`; });
 const soundBtn=$('#soundBtn');
 soundBtn.addEventListener('click',()=>{ settings.sound=!settings.sound; saveSettings(); syncOpts(); soundBtn.blur(); initAudio(); sfx.key(); });
+/* 音量スライダー：動かすと即反映。0にすると音なし、上げると音ありに戻る */
+const volRange=$('#volRange');
+volRange.addEventListener('input',()=>{ initAudio(); settings.vol=volRange.value/100; settings.sound=settings.vol>0;
+  if(master) master.gain.setTargetAtTime(masterLevel(),ac.currentTime,.02); syncOpts(); });
+volRange.addEventListener('change',()=>{ saveSettings(); sfx.key(); volRange.blur(); });
 function syncOpts(){
   document.querySelectorAll('.group').forEach(g=>{
     g.querySelectorAll('button').forEach(b=>b.classList.toggle('on', String(settings[g.dataset.key])===b.dataset.v));
@@ -766,7 +774,7 @@ function syncOpts(){
   document.querySelectorAll('.meter button').forEach(b=>{ const v=Number(b.dataset.v);
     b.classList.toggle('lit',v<=settings.fx); b.setAttribute('aria-pressed',String(v===settings.fx)); });
   const rh=$('#ruleHint'); rh.textContent=`${modeLabel(settings.mode)}：${MODE_RULE[settings.mode]}`; rh.classList.toggle('danger',settings.mode!=='normal');
-  soundBtn.classList.toggle('muted',!settings.sound); soundBtn.setAttribute('aria-pressed',String(settings.sound));
+  soundBtn.classList.toggle('muted',!settings.sound); volRange.value=Math.round(settings.vol*100); volRange.classList.toggle('muted',!settings.sound); soundBtn.setAttribute('aria-pressed',String(settings.sound));
   soundBtn.title=soundBtn.ariaLabel = settings.sound ? '音：オン' : '音：オフ';
   $('#playBox').classList.toggle('hard',settings.mode==='hard'); $('#playBox').classList.toggle('hardcore',settings.mode==='hardcore');
   document.body.classList.toggle('fx0', settings.fx===0);
@@ -783,17 +791,19 @@ const hi = () => theme().hi, errC = () => theme().err, critC = () => theme().lig
 function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.style.setProperty('--glow',hexRgb(accent())); }
 
 /* ---------- audio core ---------- */
-let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, verbBus=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
+const masterLevel = () => .75*Math.max(0,Math.min(1,Number(settings.vol)||0)); // 音量0.8で以前と同じ大きさ
+let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, musicShelf=null, verbBus=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
 function initAudio(){
   if(ac){ if(ac.state==='suspended') ac.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
   ac = new AC();
   const comp = ac.createDynamicsCompressor();
-  master = ac.createGain(); master.gain.value = .6;
+  master = ac.createGain(); master.gain.value = masterLevel();
   master.connect(comp); comp.connect(ac.destination);
   // フィーバーの曲用の経路：キックに合わせて音量を下げ（うねり）、ミスでこもらせる
   musicLP = ac.createBiquadFilter(); musicLP.type='lowpass'; musicLP.frequency.value=18000; musicLP.Q.value=.7; musicLP.connect(master);
-  musicBus = ac.createGain(); musicBus.connect(musicLP);
+  musicShelf = ac.createBiquadFilter(); musicShelf.type='highshelf'; musicShelf.frequency.value=4500; musicShelf.gain.value=0; musicShelf.connect(musicLP);
+  musicBus = ac.createGain(); musicBus.connect(musicShelf);
   // 残響：ノイズから響きのデータを作る（外部ファイルなし）。大きな場面の音だけ verbBus を通す
   const len=Math.floor(ac.sampleRate*2.2), ir=ac.createBuffer(2,len,ac.sampleRate);
   for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
@@ -883,7 +893,7 @@ const sfx = {
     if(st>=3){ tone(mtof(93),'sine',t,.8,.05,master,mtof(105)); noise(t+.3,.8,.12,'highpass',6000,.5); }
     if(st>=4) tone(400,'sawtooth',t,.55,.06,lowpass(5000),1600); // 上昇音
     if(st>=5){ // 重いサブベースと和音の突き刺し
-      tone(mtof(33),'sine',t,1.4,.7,master,mtof(24));
+      tone(mtof(33),'sine',t,1.4,.5,master,mtof(24));
       [0,.16,.32].forEach(d=>chordTones(64,88).forEach(m=>tone(mtof(m),'sawtooth',t+d,.12,.04,lp)));
       noise(t,1.4,.2,'highpass',1800,.5,9000);
     }
@@ -1055,7 +1065,10 @@ function playStep(s,t){
   if(canPlay()){
     if(s%4===0 || (fstage>=3 && (s===10||s===14))) tone(150,'sine',t,.2,.55,master,42); // キックは曲の経路を通さない
     if(s%4===0){ // サイドチェイン：キックの瞬間に曲の音量を下げて戻す。上の段階ほど深く
-      const d=Math.min(.6,.3+.06*fstage), gn=musicBus.gain; gn.cancelScheduledValues(t); gn.setValueAtTime(1-d,t); gn.linearRampToValueAtTime(1,t+.22);
+      // 上の段階は音が重なるので、戻す音量を少し下げ、高音も削って濁りと耳の疲れを抑える
+      const top=1-.07*Math.max(0,fstage-3), d=Math.min(.6,.3+.06*fstage), gn=musicBus.gain;
+      gn.cancelScheduledValues(t); gn.setValueAtTime(top*(1-d),t); gn.linearRampToValueAtTime(top,t+.22);
+      musicShelf.gain.setTargetAtTime(-1.5*Math.max(0,fstage-3),t,.1);
     }
     route=musicBus;
     if(s%4===2) noise(t,fstage>=2?.1:.035,.12,'highpass',8000);
@@ -1065,11 +1078,11 @@ function playStep(s,t){
     if(fstage>=2 && s%2===0){ const tn=chordTones(76,96); tone(mtof(tn[(s/2)%tn.length]),'square',t,.1,.03,lowpass(2400)); }
     if(fstage>=3){ const tn=chordTones(88,108); tone(mtof(tn[(s*3)%tn.length]),'sine',t,.06,.02); }
     if(fstage>=4){ // ultra：1オクターブ上のアルペジオとオープンハイハット
-      const tn=chordTones(76,100); tone(mtof(tn[(s*5)%tn.length]+12),'triangle',t,.07,.022);
-      if(s%4===2) noise(t,.22,.07,'highpass',6500,.6);
+      const tn=chordTones(76,100); tone(mtof(tn[(s*5)%tn.length]+12),'triangle',t,.07,.017);
+      if(s%4===2) noise(t,.22,.05,'highpass',6500,.6);
     }
     if(fstage>=5 && s%2===0){ // LIMIT BREAK：8分ごとの和音の突き刺し
-      const lp=lowpass(3200); chordTones(60,79).forEach(m=>tone(mtof(m),'sawtooth',t,.07,.028,lp));
+      const lp=lowpass(2800); chordTones(60,79).forEach(m=>tone(mtof(m),'sawtooth',t,.07,.02,lp));
     }
     route=master;
   }
