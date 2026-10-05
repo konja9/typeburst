@@ -1218,11 +1218,52 @@ function beatFx(s){
 }
 
 /* ---------- particles ---------- */
-const cv=$('#fx'), cx=cv.getContext('2d'), vignette=$('#vignette');
+/* 演出は画面に出さない2Dキャンバス（cv）に描き、WebGL（#fx）で後処理をかけて出す。
+   WebGLが使えない・失われたときは cv をそのまま #fx として画面に出す */
+const cv=document.createElement('canvas'), cx=cv.getContext('2d'), vignette=$('#vignette');
+let gfx=makeGL($('#fx'),cv);
+function useFlat(){ gfx=null; cv.id='fx'; $('#fx').replaceWith(cv); }
+if(!gfx) useFlat();
+function makeGL(el,src){
+  const gl=el.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false,depth:false,stencil:false});
+  if(!gl) return null;
+  el.addEventListener('webglcontextlost',useFlat,{once:true});
+  const VS='attribute vec2 a; varying vec2 v; void main(){ v=a*.5+.5; gl_Position=vec4(a,0.,1.); }';
+  const prog=fs=>{ const p=gl.createProgram();
+    [[gl.VERTEX_SHADER,VS],[gl.FRAGMENT_SHADER,'precision mediump float; varying vec2 v; '+fs]].forEach(([k,c])=>{
+      const sh=gl.createShader(k); gl.shaderSource(sh,c); gl.compileShader(sh); gl.attachShader(p,sh); });
+    gl.bindAttribLocation(p,0,'a'); gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const u={}; return {p,u:n=>u[n]??=gl.getUniformLocation(p,n)}; };
+  const tex=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+    for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D,k,v);
+    return t; };
+  let fin;
+  try{
+    fin=prog(`uniform sampler2D uBase; void main(){ gl_FragColor=texture2D(uBase,v); }`);
+  }catch(e){ return null; }
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW); // 画面を覆う大きな三角形1つ
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  const base=tex();
+  return {
+    resize(w,h){ el.width=w; el.height=h; },
+    draw(){
+      if(gl.isContextLost()) return;
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,base);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,el.width,el.height);
+      gl.useProgram(fin.p); gl.uniform1i(fin.u('uBase'),0);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    }
+  };
+}
 let W=0,H=0;
 // 演出はぼかしのある光なので、高解像度の画面でも1倍で描く（2倍だと画素数が4倍になり重い）
 function resize(){ const dpr=1; W=innerWidth; H=innerHeight;
-  cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); curFontSize=0; fxDirty=true; placeCaret(); } // 大きさを変えるとキャンバスの状態（書体など）が消える
+  cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); gfx?.resize(W*dpr,H*dpr);
+  curFontSize=0; fxDirty=true; placeCaret(); } // 大きさを変えるとキャンバスの状態（書体など）が消える
 addEventListener('resize',resize);
 const parts=[], rings=[], texts=[], lines=[], shards=[];
 let shake=0, score=0, shown=0, lastScorePop=0;
@@ -1314,6 +1355,7 @@ function loop(){
     cx.save(); cx.translate(t.x,t.y); cx.scale(sc,sc); setFont(t.size); cx.fillText(t.text,0,0); cx.restore();
   }
   cx.globalAlpha=1;
+  gfx?.draw();
   fxDirty=!!busy;
   }
   // rolling score
