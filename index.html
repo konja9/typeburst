@@ -912,6 +912,7 @@ function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.s
 /* ---------- audio core ---------- */
 const masterLevel = () => .75*Math.max(0,Math.min(1,Number(settings.vol)||0)); // 音量0.8で以前と同じ大きさ
 let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, musicShelf=null, verbBus=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
+let dly=null, echoBus=null, musicEcho=null, pan=0; // pan: tone/noise の左右（-1〜1、0で中央）
 function initAudio(){
   if(ac){ if(ac.state==='suspended') ac.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
@@ -929,6 +930,17 @@ function initAudio(){
   const conv=ac.createConvolver(); conv.buffer=ir; conv.connect(master);
   const send=ac.createGain(); send.gain.value=.32; send.connect(conv);
   verbBus = ac.createGain(); verbBus.connect(master); verbBus.connect(send);
+  // 左右に交互に返るディレイ（ピンポン、付点8分）。フィーバー中のメロディとアルペジオに薄くかける
+  dly=[0,1].map(()=>ac.createDelay(1));
+  const fb=[0,1].map(()=>{ const g=ac.createGain(); g.gain.value=.38; return g; }), mg=ac.createChannelMerger(2);
+  const dIn=ac.createGain(), dhp=ac.createBiquadFilter(), dlp=ac.createBiquadFilter();
+  dIn.gain.value=.3; dhp.type='highpass'; dhp.frequency.value=350; dlp.type='lowpass'; dlp.frequency.value=4500;
+  dIn.connect(dhp); dhp.connect(dlp); dlp.connect(dly[0]);
+  dly[0].connect(fb[0]); fb[0].connect(dly[1]); dly[1].connect(fb[1]); fb[1].connect(dly[0]);
+  dly[0].connect(mg,0,0); dly[1].connect(mg,0,1); mg.connect(master);
+  echoBus=ac.createGain(); echoBus.connect(master); echoBus.connect(dIn);
+  musicEcho=ac.createGain(); musicEcho.connect(musicBus); musicEcho.connect(dIn); // 曲の経路を通るのでサイドチェインもかかる
+  setDelayTime();
   route = master;
   noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
@@ -939,11 +951,22 @@ function env(g,t,a,peak,dur){
   g.gain.exponentialRampToValueAtTime(peak,t+a);
   g.gain.exponentialRampToValueAtTime(.0001,t+a+dur);
 }
+/* pan が0でなければ左右の位置を付けてつなぐ */
+function outTo(n,dest){
+  if(!pan || !ac.createStereoPanner){ n.connect(dest); return; }
+  const p=ac.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,pan)); n.connect(p); p.connect(dest);
+}
+function withPan(v,f){ const p=pan; pan=v; try{ f(); } finally{ pan=p; } }
+function setDelayTime(){ if(!dly) return; const d=Math.min(.9,60/(fstage?bpm():128)*.75);
+  dly.forEach(x=>x.delayTime.setTargetAtTime(d,ac.currentTime,.05)); }
+// キーボード上の位置（左端0〜右端1）。左手のキーは左、右手のキーは右から鳴らす
+const KEY_X={}; ['qwertyuiop','asdfghjkl','zxcvbnm'].forEach((r,y)=>[...r].forEach((c,i)=>KEY_X[c]=(i+y*.4)/9.4));
+const keyPan = ch => KEY_X[ch]==null ? 0 : (KEY_X[ch]-.5)*1.1;
 function tone(freq,type,t,dur,peak,dest=route,glideTo){
   const o=ac.createOscillator(), g=ac.createGain();
   o.type=type; o.frequency.setValueAtTime(freq,t);
   if(glideTo) o.frequency.exponentialRampToValueAtTime(glideTo,t+dur);
-  env(g,t,.004,peak,dur); o.connect(g); g.connect(dest);
+  env(g,t,.004,peak,dur); o.connect(g); outTo(g,dest);
   o.start(t); o.stop(t+dur+.05);
 }
 function noise(t,dur,peak,type,freq,q=1,sweepTo){
@@ -951,7 +974,7 @@ function noise(t,dur,peak,type,freq,q=1,sweepTo){
   const f=ac.createBiquadFilter(); f.type=type; f.frequency.setValueAtTime(freq,t); f.Q.value=q;
   if(sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo,t+dur);
   const g=ac.createGain(); env(g,t,.003,peak,dur);
-  s.connect(f); f.connect(g); g.connect(route); s.start(t); s.stop(t+dur+.05);
+  s.connect(f); f.connect(g); outTo(g,route); s.start(t); s.stop(t+dur+.05);
 }
 function lowpass(freq){ const f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq; f.connect(route); return f; }
 /* ミスしたとき、フィーバーの曲をこもらせて1秒ほどで戻す */
@@ -977,14 +1000,14 @@ function quantT(t){
   return q<t ? t : q;
 }
 const sfx = {
-  key(){ if(!canPlay()) return; const t=ac.currentTime;
-    noise(t,.03,.14,'bandpass',3500+tier*400,1.4);
+  key(ch){ if(!canPlay()) return; const t=ac.currentTime, kp=keyPan(ch);
+    withPan(kp,()=>noise(t,.03,.14,'bandpass',3500+tier*400,1.4)); // カチッという音は打ったキーの位置から
     tone(160,'sine',t,.04,.08,master,90);
     const tones=chordTones(64+tier*2,92);
     const i=Math.min(ARP[noteIdx%8]+(Math.floor(noteIdx/8)%2),tones.length-1), m=tones[i], f=mtof(m);
-    const tm=quantT(t); // メロディはフィーバー中だけビートの区切りに合わせる（カチッという音は即時）
-    tone(f,'triangle',tm,.2,.13); tone(f*2,'sine',tm,.1,.03);
-    if(tier>=2 && i>0) tone(mtof(tones[i-1]),'sine',tm,.24,.045);
+    const tm=quantT(t), dest=fstage?echoBus:route; // メロディはフィーバー中だけビートの区切りに合わせ、ディレイをかける（カチッという音は即時）
+    withPan(kp*.4,()=>{ tone(f,'triangle',tm,.2,.13,dest); tone(f*2,'sine',tm,.1,.03,dest); });
+    if(tier>=2 && i>0) withPan(-kp*.4,()=>tone(mtof(tones[i-1]),'sine',tm,.24,.045));
     if(tier>=1 && !fstage && noteIdx%4===0) tone(mtof(bassMidi()+12),'triangle',t,.32,.15);
   },
   word(streak){ if(!canPlay()) return; const t=ac.currentTime;
@@ -1179,7 +1202,7 @@ function hardReset(){
   floatText(x,r.top-10,'reset',errC(),26,true);
   shake=Math.max(shake,9*m); camPunch(.96);
 }
-function schedule(){ while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=60/bpm()/4; step++; } }
+function schedule(){ setDelayTime(); while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=60/bpm()/4; step++; } }
 function playStep(s,t){
   if(s===0 && step>0) chordIdx++;
   if(canPlay()){
@@ -1191,18 +1214,19 @@ function playStep(s,t){
       musicShelf.gain.setTargetAtTime(-1.5*Math.max(0,fstage-3),t,.1);
     }
     route=musicBus;
-    if(s%4===2) noise(t,fstage>=2?.1:.035,.12,'highpass',8000);
-    else if(s%2===1) noise(t,.02,.04,'highpass',9000);
+    if(s%4===2) withPan(.22,()=>noise(t,fstage>=2?.1:.035,.12,'highpass',8000));
+    else if(s%2===1) withPan(s%4===1?-.35:.35,()=>noise(t,.02,.04,'highpass',9000));
     if(s===4||s===12) noise(t,.12,.22,'bandpass',1600,.8);
     if(s%4===2||s===15) tone(mtof(bassMidi()+12),'sawtooth',t,.14,.09,lowpass(900));
-    if(fstage>=2 && s%2===0){ const tn=chordTones(76,96); tone(mtof(tn[(s/2)%tn.length]),'square',t,.1,.03,lowpass(2400)); }
-    if(fstage>=3){ const tn=chordTones(88,108); tone(mtof(tn[(s*3)%tn.length]),'sine',t,.06,.02); }
+    if(fstage>=2 && s%2===0){ const tn=chordTones(76,96), lp=ac.createBiquadFilter(); lp.frequency.value=2400; lp.connect(musicEcho);
+      withPan(s%4?.45:-.45,()=>tone(mtof(tn[(s/2)%tn.length]),'square',t,.1,.03,lp)); }
+    if(fstage>=3){ const tn=chordTones(88,108); withPan(((s*3)%5/2-1)*.5,()=>tone(mtof(tn[(s*3)%tn.length]),'sine',t,.06,.02)); }
     if(fstage>=4){ // ultra：1オクターブ上のアルペジオとオープンハイハット
-      const tn=chordTones(76,100); tone(mtof(tn[(s*5)%tn.length]+12),'triangle',t,.07,.017);
-      if(s%4===2) noise(t,.22,.05,'highpass',6500,.6);
+      const tn=chordTones(76,100); withPan(((s*5)%7/3-1)*.6,()=>tone(mtof(tn[(s*5)%tn.length]+12),'triangle',t,.07,.017,musicEcho));
+      if(s%4===2) withPan(-.4,()=>noise(t,.22,.05,'highpass',6500,.6));
     }
-    if(fstage>=5 && s%2===0){ // LIMIT BREAK：8分ごとの和音の突き刺し
-      const lp=lowpass(2800); chordTones(60,79).forEach(m=>tone(mtof(m),'sawtooth',t,.07,.02,lp));
+    if(fstage>=5 && s%2===0){ // LIMIT BREAK：8分ごとの和音の突き刺し（和音の音を左右に広げる）
+      const lp=lowpass(2800), tn=chordTones(60,79); tn.forEach((m,k)=>withPan((k/(tn.length-1||1)*2-1)*.6,()=>tone(mtof(m),'sawtooth',t,.07,.02,lp)));
     }
     route=master;
   }
@@ -1659,7 +1683,7 @@ function onChar(ch){
   w=words[wi];
   if(ok){
     okKeys++; combo++; maxCombo=Math.max(maxCombo,combo);
-    fxKey(span); sfx.key();
+    fxKey(span); sfx.key(ch);
     noteIdx++; if(!fstage && noteIdx%16===0) chordIdx++;
     const nt=tierOf(combo);
     if(nt>tier){ setTier(nt); fxTier(); sfx.tier(); }
