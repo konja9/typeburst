@@ -1238,26 +1238,54 @@ function makeGL(el,src){
   const tex=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
     for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D,k,v);
     return t; };
-  let fin;
+  let fin,down,blur;
   try{
-    fin=prog(`uniform sampler2D uBase; void main(){ gl_FragColor=texture2D(uBase,v); }`);
+    // 光のにじみ：1/4の大きさに縮めてから、横・縦にぼかす
+    down=prog(`uniform sampler2D uBase; uniform vec2 uPx;
+      void main(){ gl_FragColor=.25*(texture2D(uBase,v+uPx)+texture2D(uBase,v-uPx)+texture2D(uBase,v+vec2(uPx.x,-uPx.y))+texture2D(uBase,v-vec2(uPx.x,-uPx.y))); }`);
+    blur=prog(`uniform sampler2D uBase; uniform vec2 uDir;
+      void main(){ vec4 c=texture2D(uBase,v)*.227;
+        c+=(texture2D(uBase,v+uDir*1.385)+texture2D(uBase,v-uDir*1.385))*.316;
+        c+=(texture2D(uBase,v+uDir*3.231)+texture2D(uBase,v-uDir*3.231))*.07;
+        gl_FragColor=c; }`);
+    fin=prog(`uniform sampler2D uBase,uBloom; uniform float uBloomK;
+      void main(){ vec4 c=texture2D(uBase,v);
+        if(uBloomK>0.) c+=texture2D(uBloom,v)*uBloomK;
+        c=min(c,1.); c.a=max(c.a,max(c.r,max(c.g,c.b))); // 合成は乗算済みアルファなので色が不透明度を超えないように
+        gl_FragColor=c; }`);
   }catch(e){ return null; }
   gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW); // 画面を覆う大きな三角形1つ
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
-  const base=tex();
+  const base=tex(), small=[0,1].map(()=>({t:tex(),f:gl.createFramebuffer()}));
+  let sw=1, sh=1;
+  const pass=(pr,from,to,w,h)=>{ gl.bindFramebuffer(gl.FRAMEBUFFER,to); gl.viewport(0,0,w,h);
+    gl.useProgram(pr.p); gl.bindTexture(gl.TEXTURE_2D,from); gl.uniform1i(pr.u('uBase'),0); };
   return {
-    resize(w,h){ el.width=w; el.height=h; },
-    draw(){
+    resize(w,h){ el.width=w; el.height=h; sw=Math.max(1,Math.ceil(w/4)); sh=Math.max(1,Math.ceil(h/4));
+      for(const s of small){ gl.bindTexture(gl.TEXTURE_2D,s.t); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,sw,sh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER,s.f); gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,s.t,0); } },
+    draw(o){
       if(gl.isContextLost()) return;
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,base);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
-      gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,el.width,el.height);
-      gl.useProgram(fin.p); gl.uniform1i(fin.u('uBase'),0);
+      if(o.bloom>0){
+        pass(down,base,small[0].f,sw,sh); gl.uniform2f(down.u('uPx'),1/el.width,1/el.height); gl.drawArrays(gl.TRIANGLES,0,3);
+        pass(blur,small[0].t,small[1].f,sw,sh); gl.uniform2f(blur.u('uDir'),1/sw,0); gl.drawArrays(gl.TRIANGLES,0,3);
+        pass(blur,small[1].t,small[0].f,sw,sh); gl.uniform2f(blur.u('uDir'),0,1/sh); gl.drawArrays(gl.TRIANGLES,0,3);
+      }
+      pass(fin,base,null,el.width,el.height);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,small[0].t); gl.uniform1i(fin.u('uBloom'),1); gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1f(fin.u('uBloomK'),o.bloom);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
   };
+}
+/* 後処理の強さ。弱・reduced-motionでは何もかけない。明るいテーマは光を足すと白く飛ぶので、にじみは無し */
+const fxLv = () => reduced ? 0 : settings.fx;
+function postFx(){ const lv=fxLv();
+  return { bloom: theme().light ? 0 : [0,.4,.6][lv]*(1+.06*fstage) };
 }
 let W=0,H=0;
 // 演出はぼかしのある光なので、高解像度の画面でも1倍で描く（2倍だと画素数が4倍になり重い）
@@ -1355,7 +1383,7 @@ function loop(){
     cx.save(); cx.translate(t.x,t.y); cx.scale(sc,sc); setFont(t.size); cx.fillText(t.text,0,0); cx.restore();
   }
   cx.globalAlpha=1;
-  gfx?.draw();
+  if(gfx) gfx.draw(postFx());
   fxDirty=!!busy;
   }
   // rolling score
