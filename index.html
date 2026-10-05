@@ -912,7 +912,7 @@ function setTier(t){ tier=t; root.style.setProperty('--accent',accent()); root.s
 /* ---------- audio core ---------- */
 const masterLevel = () => .75*Math.max(0,Math.min(1,Number(settings.vol)||0)); // 音量0.8で以前と同じ大きさ
 let ac=null, master=null, noiseBuf=null, musicBus=null, musicLP=null, musicShelf=null, verbBus=null, route=null; // route: tone/noise/lowpass の出力先（既定は master）
-let dly=null, echoBus=null, musicEcho=null, kickBus=null, pan=0, voices=0; // pan: tone/noise の左右（-1〜1、0で中央）
+let dly=null, echoBus=null, musicEcho=null, kickBus=null, musicHP=null, pan=0, voices=0; // pan: tone/noise の左右（-1〜1、0で中央）
 function initAudio(){
   if(ac){ if(ac.state==='suspended') ac.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
@@ -932,7 +932,9 @@ function initAudio(){
   // フィーバーの曲用の経路：キックに合わせて音量を下げ（うねり）、ミスでこもらせる
   musicLP = ac.createBiquadFilter(); musicLP.type='lowpass'; musicLP.frequency.value=18000; musicLP.Q.value=.7; musicLP.connect(master);
   musicShelf = ac.createBiquadFilter(); musicShelf.type='highshelf'; musicShelf.frequency.value=4500; musicShelf.gain.value=0; musicShelf.connect(musicLP);
-  musicBus = ac.createGain(); musicBus.connect(musicShelf);
+  // 次の段階の直前（ゲージ85%以上）は低音を削って溜めを作る。段階が上がると戻り、ドロップが全部の帯域で鳴る
+  musicHP = ac.createBiquadFilter(); musicHP.type='highpass'; musicHP.frequency.value=20; musicHP.connect(musicShelf);
+  musicBus = ac.createGain(); musicBus.connect(musicHP);
   // 残響：ノイズから響きのデータを作る（外部ファイルなし）。大きな場面の音だけ verbBus を通す
   const len=Math.floor(ac.sampleRate*1.6), ir=ac.createBuffer(2,len,ac.sampleRate); // 残響は1.6秒（長いほど処理が重い）
   for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
@@ -967,7 +969,9 @@ function env(g,t,a,peak,dur){
 /* pan が0でなければ左右の位置を付けてつなぐ */
 function outTo(n,dest){
   if(!pan || !ac.createStereoPanner){ n.connect(dest); return; }
-  const p=ac.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,pan)); n.connect(p); p.connect(dest);
+  // 1本の音を左右に振ると中央で約3dB小さくなるので、その分を足して振らない音と同じ大きさにそろえる
+  const k=ac.createGain(), p=ac.createStereoPanner(); k.gain.value=Math.SQRT2; p.pan.value=Math.max(-1,Math.min(1,pan));
+  n.connect(k); k.connect(p); p.connect(dest);
 }
 function withPan(v,f){ const p=pan; pan=v; try{ f(); } finally{ pan=p; } }
 function setDelayTime(){ if(!dly) return; const d=Math.min(.9,60/(fstage?bpm():128)*.75);
@@ -1025,7 +1029,7 @@ function supersaw(freq,t,dur,peak,{n=5,det=22,spread=.7,cutHi=5000,cutLo=900,q=.
   for(let i=0;i<n;i++){ const k=n>1?i/(n-1)*2-1:0, o=ac.createOscillator();
     o.type='sawtooth'; o.frequency.value=freq; o.detune.value=k*det; voice(o,1);
     const v=ac.createGain(); v.gain.value=1/Math.sqrt(n);
-    if(ac.createStereoPanner && k){ const p=ac.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,pan+k*spread)); o.connect(v); v.connect(p); p.connect(f); }
+    if(ac.createStereoPanner && k){ const p=ac.createStereoPanner(); v.gain.value*=Math.SQRT2; p.pan.value=Math.max(-1,Math.min(1,pan+k*spread)); o.connect(v); v.connect(p); p.connect(f); }
     else { o.connect(v); v.connect(f); }
     o.start(t); o.stop(t+dur+.05); }
 }
@@ -1045,7 +1049,9 @@ function muffle(){
 }
 
 /* ---------- music ---------- */
-const mtof = m => 440*Math.pow(2,(m-69)/12);
+// LIMIT BREAK では曲もメロディも全音上に転調して「もう一段上がった」感じを出す
+const keyShift = () => fstage>=MAX_STAGE ? 2 : 0;
+const mtof = m => 440*Math.pow(2,(m+keyShift()-69)/12);
 const PROG=[{r:9,q:[0,3,7]},{r:5,q:[0,4,7]},{r:0,q:[0,4,7]},{r:7,q:[0,4,7]}]; // Am F C G
 const ARP=[0,2,1,3,2,4,3,1];
 let chordIdx=0, noteIdx=0;
@@ -1263,11 +1269,20 @@ function hardReset(){
   floatText(x,r.top-10,'reset',errC(),26,true);
   shake=Math.max(shake,9*m); camPunch(.96);
 }
-function schedule(){ setDelayTime(); while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=60/bpm()/4; step++; } }
+/* 溜めの強さ（0〜1）：フィーバー中、次の段階までゲージ85%を超えたら */
+const buildLv = () => fstage>0 && fstage<MAX_STAGE ? Math.max(0,(gauge-85)/15) : 0;
+function crash(t){ withPan(.3,()=>noise(t,1.2,.07,'highpass',5000,.5)); withPan(-.3,()=>hat(t,.9,.035)); }
+function schedule(){ setDelayTime();
+  if(musicHP){ const b=buildLv(), f=musicHP.frequency; // 溜めは徐々に、段階が上がったら一気に戻す
+    if(b) f.setTargetAtTime(20*Math.pow(2,b*6),ac.currentTime,.15); else if(f.value>21){ f.cancelScheduledValues(ac.currentTime); f.setValueAtTime(20,ac.currentTime); } }
+  while(nextT<clock()+.12){ playStep(step%16,nextT); nextT+=60/bpm()/4; step++; } }
 function playStep(s,t){
   if(s===0 && step>0) chordIdx++;
   if(canPlay()){
-    if(s%4===0 || (fstage>=3 && (s===10||s===14))) kick(t); // キックは曲の経路を通さない
+    // 4小節ごとの最後の拍はスネアのフィル、次の小節の頭でクラッシュ。溜めの間はキックを間引き、スネアを8分で刻む
+    const fill = chordIdx%4===3 && s>=12, build=buildLv();
+    if(s===0 && step>0 && chordIdx%4===0) crash(t);
+    if((s%4===0 || (fstage>=3 && (s===10||s===14))) && !(fill && s>12) && !(build>.5 && s%8)) kick(t); // キックは曲の経路を通さない
     if(s%4===0){ // サイドチェイン：キックの瞬間に曲の音量を下げて戻す。上の段階ほど深く
       // 上の段階は音が重なるので、戻す音量を少し下げ、高音も削って濁りと耳の疲れを抑える
       const top=1-.07*Math.max(0,fstage-3), d=Math.min(.6,.3+.06*fstage), gn=musicBus.gain;
@@ -1275,9 +1290,13 @@ function playStep(s,t){
       musicShelf.gain.setTargetAtTime(-1.5*Math.max(0,fstage-3),t,.1);
     }
     route=musicBus;
-    if(s%4===2) withPan(.22,()=>hat(t,fstage>=2?.1:.035,.1));
-    else if(s%2===1) withPan(s%4===1?-.35:.35,()=>hat(t,.022,.035));
-    if(s===4||s===12) snare(t,.16);
+    if(fill){ snare(t,.07+.03*(s-12)); if(fstage>=3) snare(t+30/bpm()/4,.05+.03*(s-12)); } // 上の段階は32分で細かく
+    else {
+      if(s%4===2) withPan(.22,()=>hat(t,fstage>=2?.1:.035,.1));
+      else if(s%2===1) withPan(s%4===1?-.35:.35,()=>hat(t,.022,.035));
+      if(build>0 && s%2===0) snare(t,.05+.09*build);
+      else if(s===4||s===12) snare(t,.16);
+    }
     if(s%4===2||s===15) pluck(mtof(bassMidi()+12),t,.16,.1,'sawtooth',2200,260,5); // ベースははじく音
     if(fstage>=2 && s%2===0){ const tn=chordTones(76,96);
       withPan(s%4?.45:-.45,()=>pluck(mtof(tn[(s/2)%tn.length]),t,.1,.034,'square',4200,900,2,musicEcho)); }
